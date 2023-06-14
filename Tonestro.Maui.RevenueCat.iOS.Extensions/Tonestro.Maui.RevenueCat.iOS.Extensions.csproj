@@ -3,11 +3,12 @@
         <TargetFramework>net7.0-ios</TargetFramework>
         <Nullable>disable</Nullable>
         <ImplicitUsings>false</ImplicitUsings>
+        <RootNamespace>Tonestro.Maui.RevenueCat.iOS.Extensions</RootNamespace>
     </PropertyGroup>
     <PropertyGroup>
         <IsPackable>true</IsPackable>
-        <PackageId>Maui.RevenueCat.iOS.Extensions</PackageId>
-        <Description>Contains convenience methods and async extensions for Maui.RevenueCat.iOS</Description>
+        <PackageId>Tonestro.Maui.RevenueCat.iOS.Extensions</PackageId>
+        <Description>Contains convenience methods and async extensions for Tonestro.Maui.RevenueCat.iOS</Description>
         <Version>4.9.0.4</Version>
         <Authors>Christian Kapplmüller</Authors>
         <Company>fun.music IT GmbH</Company>
@@ -15,6 +16,6 @@
         <PackageLicensePath>..\..\..\LICENSE.txt</PackageLicensePath>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Maui.RevenueCat.iOS\Maui.RevenueCat.iOS.csproj"/>
+        <ProjectReference Include="..\Tonestro.Maui.RevenueCat.iOS\Tonestro.Maui.RevenueCat.iOS.csproj" />
     </ItemGroup>
 </Project>

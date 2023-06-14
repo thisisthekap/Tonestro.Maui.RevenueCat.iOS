@@ -1,4 +1,4 @@
-namespace Maui.RevenueCat.iOS.UsageChecker;
+namespace Tonestro.Maui.RevenueCat.iOS.UsageChecker;
 
 [Register ("SceneDelegate")]
 public class SceneDelegate : UIResponder, IUIWindowSceneDelegate {

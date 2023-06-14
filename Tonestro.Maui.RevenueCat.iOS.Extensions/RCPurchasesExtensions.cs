@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Foundation;
 using RevenueCat;
 
-namespace Maui.RevenueCat.iOS.Extensions
+namespace Tonestro.Maui.RevenueCat.iOS.Extensions
 {
     // ReSharper disable once InconsistentNaming
     public static class RCPurchasesExtensions

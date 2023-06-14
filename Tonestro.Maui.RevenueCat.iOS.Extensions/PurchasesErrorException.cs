@@ -2,7 +2,7 @@ using System;
 using Foundation;
 using RevenueCat;
 
-namespace Maui.RevenueCat.iOS.Extensions
+namespace Tonestro.Maui.RevenueCat.iOS.Extensions
 {
     public class PurchasesErrorException : Exception
     {

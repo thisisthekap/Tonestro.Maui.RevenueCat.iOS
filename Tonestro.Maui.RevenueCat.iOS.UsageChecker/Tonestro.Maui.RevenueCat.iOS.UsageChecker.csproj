@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\Maui.RevenueCat.iOS\Maui.RevenueCat.iOS.csproj" />
-    <ProjectReference Include="..\Maui.RevenueCat.iOS.Extensions\Maui.RevenueCat.iOS.Extensions.csproj" />
+    <ProjectReference Include="..\Tonestro.Maui.RevenueCat.iOS\Tonestro.Maui.RevenueCat.iOS.csproj" />
+    <ProjectReference Include="..\Tonestro.Maui.RevenueCat.iOS.Extensions\Tonestro.Maui.RevenueCat.iOS.Extensions.csproj" />
   </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net7.0-ios</TargetFramework>
@@ -9,5 +9,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>true</ImplicitUsings>
     <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+    <RootNamespace>Tonestro.Maui.RevenueCat.iOS.UsageChecker</RootNamespace>
   </PropertyGroup>
 </Project>

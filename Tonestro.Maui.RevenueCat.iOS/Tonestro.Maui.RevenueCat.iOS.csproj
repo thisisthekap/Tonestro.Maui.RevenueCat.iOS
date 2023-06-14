@@ -6,11 +6,12 @@
         <IsBindingProject>true</IsBindingProject>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <NoBindingEmbedding>false</NoBindingEmbedding>
+        <RootNamespace>Tonestro.Maui.RevenueCat.iOS</RootNamespace>
     </PropertyGroup>
     
     <PropertyGroup>
         <IsPackable>true</IsPackable>
-        <PackageId>Maui.RevenueCat.iOS</PackageId>
+        <PackageId>Tonestro.Maui.RevenueCat.iOS</PackageId>
         <Version>4.9.0.4</Version>
         <Description>Contains bindings for https://docs.revenuecat.com/docs/ios</Description>
         <Authors>Christian Kapplmüller</Authors>

@@ -1,6 +1,6 @@
 using RevenueCat;
 
-namespace Maui.RevenueCat.iOS.UsageChecker;
+namespace Tonestro.Maui.RevenueCat.iOS.UsageChecker;
 
 [Register("AppDelegate")]
 public class AppDelegate : UIApplicationDelegate

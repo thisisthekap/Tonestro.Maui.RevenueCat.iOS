@@ -1,6 +1,6 @@
 ﻿using RevenueCat;
 
-namespace Maui.RevenueCat.iOS.Extensions
+namespace Tonestro.Maui.RevenueCat.iOS.Extensions
 {
     public struct PurchaseSuccessInfo
     {
