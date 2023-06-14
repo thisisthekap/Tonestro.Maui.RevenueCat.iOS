@@ -8,7 +8,7 @@
         <IsPackable>true</IsPackable>
         <PackageId>Maui.RevenueCat.iOS.Extensions</PackageId>
         <Description>Contains convenience methods and async extensions for Maui.RevenueCat.iOS</Description>
-        <Version>4.9.0.1</Version>
+        <Version>4.9.0.2</Version>
         <Authors>Christian Kapplmüller</Authors>
         <Company>fun.music IT GmbH</Company>
         <PackageOutputPath>nugetoutput</PackageOutputPath>
