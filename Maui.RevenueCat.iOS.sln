@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maui.RevenueCat.iOS", "Maui.RevenueCat.iOS\Maui.RevenueCat.iOS.csproj", "{2DCD2C69-88F9-4723-971E-434CCED743F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maui.RevenueCat.iOS.Extensions", "Maui.RevenueCat.iOS.Extensions\Maui.RevenueCat.iOS.Extensions.csproj", "{89F73F19-4628-49A8-AD56-C2237DADE6B4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maui.RevenueCat.iOS.UsageChecker", "Maui.RevenueCat.iOS.UsageChecker\Maui.RevenueCat.iOS.UsageChecker.csproj", "{BAC73864-6FB4-4B9D-9892-81E8711855F8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2DCD2C69-88F9-4723-971E-434CCED743F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DCD2C69-88F9-4723-971E-434CCED743F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DCD2C69-88F9-4723-971E-434CCED743F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DCD2C69-88F9-4723-971E-434CCED743F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89F73F19-4628-49A8-AD56-C2237DADE6B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89F73F19-4628-49A8-AD56-C2237DADE6B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89F73F19-4628-49A8-AD56-C2237DADE6B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89F73F19-4628-49A8-AD56-C2237DADE6B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAC73864-6FB4-4B9D-9892-81E8711855F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAC73864-6FB4-4B9D-9892-81E8711855F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAC73864-6FB4-4B9D-9892-81E8711855F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAC73864-6FB4-4B9D-9892-81E8711855F8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

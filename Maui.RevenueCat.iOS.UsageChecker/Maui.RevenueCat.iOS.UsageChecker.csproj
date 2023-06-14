@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Maui.RevenueCat.iOS\Maui.RevenueCat.iOS.csproj" />
+    <ProjectReference Include="..\Maui.RevenueCat.iOS.Extensions\Maui.RevenueCat.iOS.Extensions.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net7.0-ios</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>true</ImplicitUsings>
+    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+</Project>
