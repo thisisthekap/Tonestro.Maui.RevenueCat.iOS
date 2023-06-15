@@ -33,7 +33,7 @@ steps:
     dotnet pack --configuration Release
 
 - bash: |
-    dotnet nuget push Tonestro.Maui.RevenueCat.iOS/nugetoutput/Maui.RevenueCat.iOS.*.nupkg -k "$(nugetOrgApiKey)" -s https://api.nuget.org/v3/index.json
+    dotnet nuget push Tonestro.Maui.RevenueCat.iOS/nugetoutput/Tonestro.Maui.RevenueCat.iOS.*.nupkg -k "$(nugetOrgApiKey)" -s https://api.nuget.org/v3/index.json
 
 - task: GitHubRelease@1
   inputs:
