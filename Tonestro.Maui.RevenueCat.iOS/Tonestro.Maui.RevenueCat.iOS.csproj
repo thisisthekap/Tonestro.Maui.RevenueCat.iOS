@@ -31,4 +31,8 @@
             <ForceLoad>True</ForceLoad>
         </NativeReference>
     </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="422_ApiDefinitions.cs" />
+      <None Include="422_ApiDefinitions.cs" />
+    </ItemGroup>
 </Project>

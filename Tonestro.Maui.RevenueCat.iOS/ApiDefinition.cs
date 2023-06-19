@@ -585,7 +585,7 @@ interface PaymentQueueWrapperType
 }
 
 // @interface ProductsFetcherSK1 : NSObject
-[BaseType(typeof(NSObject))]
+/*[BaseType(typeof(NSObject))]
 [DisableDefaultCtor]
 interface ProductsFetcherSK1
 {
@@ -600,7 +600,7 @@ interface ProductsFetcherSK1
     // -(void)request:(SKRequest * _Nonnull)request didFailWithError:(NSError * _Nonnull)error;
     [Export("request:didFailWithError:")]
     void Request(SKRequest request, NSError error);
-}
+}*/
 
 // @interface RCPromotionalOffer : NSObject
 [BaseType(typeof(NSObject))]
@@ -1073,7 +1073,7 @@ interface RCPurchasesDiagnostics
     void TestSDKHealthWithCompletion(Action<NSError> completionHandler);
 }
 
-// @interface PurchasesReceiptParser : NSObject
+/*// @interface PurchasesReceiptParser : NSObject
 [BaseType(typeof(NSObject))]
 [DisableDefaultCtor]
 interface PurchasesReceiptParser
@@ -1086,20 +1086,20 @@ interface PurchasesReceiptParser
     [Static]
     [Export("default_", ArgumentSemantic.Strong)]
     PurchasesReceiptParser Default_ { [Bind("default")] get; }
-}
+}*/
 
 // @interface RedirectLoggerSessionDelegate : NSObject <NSURLSessionTaskDelegate>
-[BaseType(typeof(NSObject))]
+/*[BaseType(typeof(NSObject))]
 interface RedirectLoggerSessionDelegate : INSUrlSessionTaskDelegate
 {
     // -(void)URLSession:(NSURLSession * _Nonnull)session task:(NSURLSessionTask * _Nonnull)task willPerformHTTPRedirection:(NSHTTPURLResponse * _Nonnull)response newRequest:(NSURLRequest * _Nonnull)request completionHandler:(void (^ _Nonnull)(NSURLRequest * _Nullable))completionHandler;
     [Export("URLSession:task:willPerformHTTPRedirection:newRequest:completionHandler:")]
     void URLSession(NSUrlSession session, NSUrlSessionTask task, NSHttpUrlResponse response, NSUrlRequest request,
         Action<NSUrlRequest> completionHandler);
-}
+}*/
 
 // @interface StoreKit1Wrapper : NSObject
-[BaseType(typeof(NSObject))]
+/*[BaseType(typeof(NSObject))]
 [DisableDefaultCtor]
 interface StoreKit1Wrapper
 {
@@ -1142,10 +1142,10 @@ interface StoreKit1Wrapper
     // -(void)paymentQueueDidChangeStorefront:(SKPaymentQueue * _Nonnull)queue;
     [Export("paymentQueueDidChangeStorefront:")]
     void PaymentQueueDidChangeStorefront(SKPaymentQueue queue);
-}
+}*/
 
 // @interface StoreKitRequestFetcher : NSObject
-[BaseType(typeof(NSObject))]
+/*[BaseType(typeof(NSObject))]
 [DisableDefaultCtor]
 interface StoreKitRequestFetcher
 {
@@ -1156,7 +1156,7 @@ interface StoreKitRequestFetcher
     // -(void)request:(SKRequest * _Nonnull)request didFailWithError:(NSError * _Nonnull)error;
     [Export("request:didFailWithError:")]
     void Request(SKRequest request, NSError error);
-}
+}*/
 
 // @interface RCStoreProduct : NSObject
 [BaseType(typeof(NSObject))]
