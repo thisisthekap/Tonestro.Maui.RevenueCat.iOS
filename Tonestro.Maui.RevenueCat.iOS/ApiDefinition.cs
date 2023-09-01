@@ -5,7 +5,9 @@ using StoreKit;
 
 namespace RevenueCat;
 
-delegate void ReadyForPromotedProductCallbackHandler(RCStoreTransaction transaction, RCCustomerInfo customerInfo, NSError error, bool userCancelled);
+delegate void ReadyForPromotedProductCallbackHandler(RCStoreTransaction transaction, RCCustomerInfo customerInfo,
+    NSError error, bool userCancelled);
+
 delegate void StartPurchaseHandler([BlockCallback] ReadyForPromotedProductCallbackHandler defermentBlock);
 
 // @interface RCAttribution : NSObject
@@ -13,6 +15,9 @@ delegate void StartPurchaseHandler([BlockCallback] ReadyForPromotedProductCallba
 [DisableDefaultCtor]
 interface RCAttribution
 {
+    [Export("enableAdServicesAttributionTokenCollection")]
+    void EnableAdServicesAttributionTokenCollection();
+
     // -(void)collectDeviceIdentifiers;
     [Export("collectDeviceIdentifiers")]
     void CollectDeviceIdentifiers();
@@ -102,17 +107,6 @@ interface RCAttribution
     void SetCreative([NullAllowed] string creative);
 }
 
-// @interface RCConfiguration : NSObject
-[BaseType(typeof(NSObject))]
-[DisableDefaultCtor]
-interface RCConfiguration
-{
-    // +(RCConfigurationBuilder * _Nonnull)builderWithAPIKey:(NSString * _Nonnull)apiKey __attribute__((warn_unused_result("")));
-    [Static]
-    [Export("builderWithAPIKey:")]
-    RCConfigurationBuilder BuilderWithAPIKey(string apiKey);
-}
-
 // @interface RCConfigurationBuilder : NSObject
 [BaseType(typeof(NSObject))]
 [DisableDefaultCtor]
@@ -159,9 +153,23 @@ interface RCConfigurationBuilder
     [Export("withPlatformInfo:")]
     RCConfigurationBuilder WithPlatformInfo(RCPlatformInfo platformInfo);
 
+    [Export("withEntitlementVerificationMode:")]
+    RCConfigurationBuilder WithEntitlementVerificationMode(RCEntitlementVerificationMode mode);
+
     // -(RCConfiguration * _Nonnull)build __attribute__((warn_unused_result("")));
     [Export("build")]
     RCConfiguration Build();
+}
+
+// @interface RCConfiguration : NSObject
+[BaseType(typeof(NSObject))]
+[DisableDefaultCtor]
+interface RCConfiguration
+{
+    // +(RCConfigurationBuilder * _Nonnull)builderWithAPIKey:(NSString * _Nonnull)apiKey __attribute__((warn_unused_result("")));
+    [Static]
+    [Export("builderWithAPIKey:")]
+    RCConfigurationBuilder BuilderWithAPIKey(string apiKey);
 }
 
 // @interface RCCustomerInfo : NSObject
@@ -263,10 +271,18 @@ interface RCDangerousSettings
     // @property (readonly, nonatomic) BOOL autoSyncPurchases;
     [Export("autoSyncPurchases")] bool AutoSyncPurchases { get; }
 
+    // @property (readonly, nonatomic) BOOL customEntitlementComputation;
+    [Export("customEntitlementComputation")]
+    bool CustomEntitlementComputation { get; }
+
     // -(instancetype _Nonnull)initWithAutoSyncPurchases:(BOOL)autoSyncPurchases __attribute__((objc_designated_initializer));
     [Export("initWithAutoSyncPurchases:")]
     [DesignatedInitializer]
     IntPtr Constructor(bool autoSyncPurchases);
+
+    // -(instancetype _Nonnull)initWithAutoSyncPurchases:(BOOL)autoSyncPurchases customEntitlementComputation:(BOOL)customEntitlementComputation;
+    [Export("initWithAutoSyncPurchases:customEntitlementComputation:")]
+    IntPtr Constructor(bool autoSyncPurchases, bool customEntitlementComputation);
 }
 
 // @interface RCEntitlementInfo : NSObject
@@ -317,6 +333,9 @@ interface RCEntitlementInfo : INativeObject
 
     // @property (readonly, nonatomic) enum RCPurchaseOwnershipType ownershipType;
     [Export("ownershipType")] RCPurchaseOwnershipType OwnershipType { get; }
+
+    // @property (readonly, nonatomic) enum RCVerificationResult verification __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("verification")] RCVerificationResult Verification { get; }
 
     // @property (readonly, copy, nonatomic) NSDictionary<NSString *,id> * _Nonnull rawData;
     [Export("rawData", ArgumentSemantic.Copy)]
@@ -413,6 +432,10 @@ interface RCOffering : INativeObject
 
     // @property (readonly, copy, nonatomic) NSString * _Nonnull serverDescription;
     [Export("serverDescription")] string ServerDescription { get; }
+
+    // @property (readonly, copy, nonatomic) NSDictionary<NSString *,id> * _Nonnull metadata;
+    [Export("metadata", ArgumentSemantic.Copy)]
+    NSDictionary<NSString, NSObject> Metadata { get; }
 
     // @property (readonly, copy, nonatomic) NSArray<RCPackage *> * _Nonnull availablePackages;
     [Export("availablePackages", ArgumentSemantic.Copy)]
@@ -531,10 +554,58 @@ interface RCPackage
     RCPackageType PackageTypeFrom(string @string);
 }
 
+// @protocol PaymentQueueWrapperType
+/*
+  Check whether adding [Model] to this declaration is appropriate.
+  [Model] is used to generate a C# class that implements this protocol,
+  and might be useful for protocols that consumers are supposed to implement,
+  since consumers can subclass the generated class instead of implementing
+  the generated interface. If consumers are not supposed to implement this
+  protocol, then [Model] is redundant and will generate code that will never
+  be used.
+*/
+[Protocol]
+interface PaymentQueueWrapperType
+{
+    // @property (readonly, nonatomic, strong) RCStorefront * _Nullable currentStorefront;
+    [NullAllowed, Export("currentStorefront", ArgumentSemantic.Strong)]
+    RCStorefront CurrentStorefront { get; }
+
+    // -(BOOL)paymentQueueShouldShowPriceConsent:(SKPaymentQueue * _Nonnull)paymentQueue __attribute__((warn_unused_result(""))) __attribute__((availability(maccatalyst, introduced=13.4))) __attribute__((availability(ios, introduced=13.4)));
+    [Export("paymentQueueShouldShowPriceConsent:")]
+    bool PaymentQueueShouldShowPriceConsent(SKPaymentQueue paymentQueue);
+
+    // -(void)paymentQueue:(SKPaymentQueue * _Nonnull)queue updatedTransactions:(NSArray<SKPaymentTransaction *> * _Nonnull)transactions;
+    [Export("paymentQueue:updatedTransactions:")]
+    void PaymentQueue(SKPaymentQueue queue, SKPaymentTransaction[] transactions);
+
+    // -(BOOL)paymentQueue:(SKPaymentQueue * _Nonnull)queue shouldAddStorePayment:(SKPayment * _Nonnull)payment forProduct:(SKProduct * _Nonnull)product __attribute__((swift_name("paymentQueue(_:shouldAddStorePayment:for:)"))) __attribute__((warn_unused_result("")));
+    [Export("paymentQueue:shouldAddStorePayment:forProduct:")]
+    bool PaymentQueue(SKPaymentQueue queue, SKPayment payment, SKProduct product);
+}
+
+// @interface ProductsFetcherSK1 : NSObject
+/*[BaseType(typeof(NSObject))]
+[DisableDefaultCtor]
+interface ProductsFetcherSK1
+{
+    // -(void)productsRequest:(SKProductsRequest * _Nonnull)request didReceiveResponse:(SKProductsResponse * _Nonnull)response;
+    [Export("productsRequest:didReceiveResponse:")]
+    void ProductsRequest(SKProductsRequest request, SKProductsResponse response);
+
+    // -(void)requestDidFinish:(SKRequest * _Nonnull)request;
+    [Export("requestDidFinish:")]
+    void RequestDidFinish(SKRequest request);
+
+    // -(void)request:(SKRequest * _Nonnull)request didFailWithError:(NSError * _Nonnull)error;
+    [Export("request:didFailWithError:")]
+    void Request(SKRequest request, NSError error);
+}*/
+
 // @interface RCPromotionalOffer : NSObject
 [BaseType(typeof(NSObject))]
 [DisableDefaultCtor]
-interface RCPromotionalOffer
+interface RCPromotionalOffer : INativeObject
 {
     // @property (readonly, nonatomic, strong) RCStoreProductDiscount * _Nonnull discount;
     [Export("discount", ArgumentSemantic.Strong)]
@@ -565,12 +636,106 @@ interface RCPromotionalOfferSignedData
 
     // @property (readonly, nonatomic) NSInteger timestamp;
     [Export("timestamp")] nint Timestamp { get; }
+
+    // -(BOOL)isEqual:(id _Nullable)object __attribute__((warn_unused_result("")));
+    [Export("isEqual:")]
+    bool IsEqual([NullAllowed] NSObject @object);
 }
 
-// @interface RCPurchases : NSObject
+// @protocol RCPurchasesType
+/*
+  Check whether adding [Model] to this declaration is appropriate.
+  [Model] is used to generate a C# class that implements this protocol,
+  and might be useful for protocols that consumers are supposed to implement,
+  since consumers can subclass the generated class instead of implementing
+  the generated interface. If consumers are not supposed to implement this
+  protocol, then [Model] is redundant and will generate code that will never
+  be used.
+*/
+[Protocol]
+interface RCPurchasesType
+{
+    // @property (readonly, nonatomic, strong, class) RCPurchases * _Nonnull sharedPurchases;
+	[Static]
+	[Export ("sharedPurchases", ArgumentSemantic.Strong)]
+	RCPurchases SharedPurchases { get; }
+
+	// @property (readonly, nonatomic, class) BOOL isConfigured;
+	[Static]
+	[Export ("isConfigured")]
+	bool IsConfigured { get; }
+
+	[Wrap ("WeakDelegate")]
+	[NullAllowed]
+	RCPurchasesDelegate Delegate { get; set; }
+
+	// @property (nonatomic, strong) id<RCPurchasesDelegate> _Nullable delegate;
+	[NullAllowed, Export ("delegate", ArgumentSemantic.Strong)]
+	NSObject WeakDelegate { get; set; }
+
+	// @property (nonatomic, class) enum RCLogLevel logLevel;
+	[Static]
+	[Export ("logLevel", ArgumentSemantic.Assign)]
+	RCLogLevel LogLevel { get; set; }
+
+	// @property (copy, nonatomic, class) NSURL * _Nullable proxyURL;
+	[Static]
+	[NullAllowed, Export ("proxyURL", ArgumentSemantic.Copy)]
+	NSUrl ProxyURL { get; set; }
+
+	// @property (nonatomic, class) BOOL forceUniversalAppStore;
+	[Static]
+	[Export ("forceUniversalAppStore")]
+	bool ForceUniversalAppStore { get; set; }
+
+	// @property (nonatomic, class) BOOL simulatesAskToBuyInSandbox __attribute__((availability(maccatalyst, introduced=13.0))) __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(macos, introduced=10.14))) __attribute__((availability(ios, introduced=8.0)));
+	[Static]
+	[Export ("simulatesAskToBuyInSandbox")]
+	bool SimulatesAskToBuyInSandbox { get; set; }
+
+	// +(BOOL)canMakePayments __attribute__((warn_unused_result("")));
+	[Static]
+	[Export ("canMakePayments")]
+	bool CanMakePayments { get; }
+
+	// @property (copy, nonatomic, class) void (^ _Nonnull)(enum RCLogLevel, NSString * _Nonnull) logHandler;
+	[Static]
+	[Export ("logHandler", ArgumentSemantic.Copy)]
+	Action<RCLogLevel, NSString> LogHandler { get; set; }
+
+	// @property (copy, nonatomic, class) void (^ _Nonnull)(enum RCLogLevel, NSString * _Nonnull, NSString * _Nullable, NSString * _Nullable, NSUInteger) verboseLogHandler;
+	[Static]
+	[Export ("verboseLogHandler", ArgumentSemantic.Copy)]
+	Action<RCLogLevel, NSString, NSString, NSString, nuint> VerboseLogHandler { get; set; }
+
+	// @property (nonatomic, class) BOOL verboseLogs;
+	[Static]
+	[Export ("verboseLogs")]
+	bool VerboseLogs { get; set; }
+
+	// @property (readonly, copy, nonatomic, class) NSString * _Nonnull frameworkVersion;
+	[Static]
+	[Export ("frameworkVersion")]
+	string FrameworkVersion { get; }
+
+	// @property (readonly, nonatomic, strong) RCAttribution * _Nonnull attribution;
+	[Export ("attribution", ArgumentSemantic.Strong)]
+	RCAttribution Attribution { get; }
+
+	// @property (nonatomic) BOOL finishTransactions;
+	[Export ("finishTransactions")]
+	bool FinishTransactions { get; set; }
+    
+    // @property (nonatomic, strong, class) RCPlatformInfo * _Nullable platformInfo;
+    [Static]
+    [NullAllowed, Export ("platformInfo", ArgumentSemantic.Strong)]
+    RCPlatformInfo PlatformInfo { get; set; }
+}
+
+// @interface RCPurchases : NSObject <RCPurchasesType>
 [BaseType(typeof(NSObject))]
 [DisableDefaultCtor]
-interface RCPurchases
+interface RCPurchases : RCPurchasesType
 {
     // @property (readonly, nonatomic, strong, class) RCPurchases * _Nonnull sharedPurchases;
     [Static]
@@ -585,11 +750,6 @@ interface RCPurchases
     // @property (nonatomic, strong) id<RCPurchasesDelegate> _Nullable delegate;
     [NullAllowed, Export("delegate", ArgumentSemantic.Strong)]
     NSObject WeakDelegate { get; set; }
-
-    // @property (nonatomic, class) BOOL automaticAppleSearchAdsAttributionCollection;
-    [Static]
-    [Export("automaticAppleSearchAdsAttributionCollection")]
-    bool AutomaticAppleSearchAdsAttributionCollection { get; set; }
 
     // @property (nonatomic, class) enum RCLogLevel logLevel;
     [Static]
@@ -642,6 +802,22 @@ interface RCPurchases
     [NullAllowed, Export("platformInfo", ArgumentSemantic.Strong)]
     RCPlatformInfo PlatformInfo { get; set; }
 
+    // -(void)logIn:(NSString * _Nonnull)appUserID completion:(void (^ _Nonnull)(RCCustomerInfo * _Nullable, BOOL, NSError * _Nullable))completion;
+    [Export("logIn:completion:")]
+    void LogInWithCompletion(string appUserID, Action<RCCustomerInfo, bool, NSError> completion);
+
+    // -(void)logIn:(NSString * _Nonnull)appUserID completionHandler:(void (^ _Nonnull)(RCCustomerInfo * _Nullable, BOOL, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("logIn:completionHandler:")]
+    void LogInWithCompletionHandler(string appUserID, Action<RCCustomerInfo, bool, NSError> completionHandler);
+
+    // -(void)logOutWithCompletion:(void (^ _Nullable)(RCCustomerInfo * _Nullable, NSError * _Nullable))completion;
+    [Export("logOutWithCompletion:")]
+    void LogOutWithCompletion([NullAllowed] Action<RCCustomerInfo, NSError> completion);
+
+    // -(void)logOutWithCompletionHandler:(void (^ _Nonnull)(RCCustomerInfo * _Nullable, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("logOutWithCompletionHandler:")]
+    void LogOutWithCompletionHandler(Action<RCCustomerInfo, NSError> completionHandler);
+
     // +(RCPurchases * _Nonnull)configureWithConfiguration:(RCConfiguration * _Nonnull)configuration;
     [Static]
     [Export("configureWithConfiguration:")]
@@ -657,13 +833,10 @@ interface RCPurchases
     [Export("configureWithAPIKey:")]
     RCPurchases ConfigureWithAPIKey(string apiKey);
 
-    // -(void)readyForPromotedProduct:(RCStoreProduct * _Nonnull)product purchase:(void (^ _Nonnull)(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, NSError * _Nullable, BOOL)))startPurchase;
-    [Export("readyForPromotedProduct:purchase:")]
-    void ReadyForPromotedProduct(RCStoreProduct product, StartPurchaseHandler startPurchaseHandler);
-
-    // @property (readonly, nonatomic) BOOL shouldShowPriceConsent __attribute__((availability(maccatalyst, introduced=13.4))) __attribute__((availability(ios, introduced=13.4)));
-    [Export("shouldShowPriceConsent")]
-    bool ShouldShowPriceConsent { get; }
+    // +(RCPurchases * _Nonnull)configureWithAPIKey:(NSString * _Nonnull)apiKey appUserID:(NSString * _Nullable)appUserID;
+    [Static]
+    [Export("configureWithAPIKey:appUserID:")]
+    RCPurchases ConfigureWithAPIKey(string apiKey, [NullAllowed] string appUserID);
 
     // @property (nonatomic, class) BOOL debugLogsEnabled __attribute__((deprecated("use Purchases.logLevel instead")));
     [Static] [Export("debugLogsEnabled")] bool DebugLogsEnabled { get; set; }
@@ -689,17 +862,18 @@ interface RCPurchases
     // @property (readonly, nonatomic) BOOL isAnonymous;
     [Export("isAnonymous")] bool IsAnonymous { get; }
 
-    // -(void)logIn:(NSString * _Nonnull)appUserID completion:(void (^ _Nonnull)(RCCustomerInfo * _Nullable, BOOL, NSError * _Nullable))completion;
-    [Export("logIn:completion:")]
-    void LogIn(string appUserID, Action<RCCustomerInfo, bool, NSError> completion);
-
-    // -(void)logOutWithCompletion:(void (^ _Nullable)(RCCustomerInfo * _Nullable, NSError * _Nullable))completion;
-    [Export("logOutWithCompletion:")]
-    void LogOutWithCompletion([NullAllowed] Action<RCCustomerInfo, NSError> completion);
-
     // -(void)getOfferingsWithCompletion:(void (^ _Nonnull)(RCOfferings * _Nullable, NSError * _Nullable))completion;
     [Export("getOfferingsWithCompletion:")]
     void GetOfferingsWithCompletion(Action<RCOfferings, NSError> completion);
+
+    // -(void)offeringsWithCompletionHandler:(void (^ _Nonnull)(RCOfferings * _Nullable, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("offeringsWithCompletionHandler:")]
+    void OfferingsWithCompletionHandler(Action<RCOfferings, NSError> completionHandler);
+    
+    // @property (nonatomic, class) BOOL automaticAppleSearchAdsAttributionCollection __attribute__((deprecated("Use Purchases.shared.attribution.enableAdServicesAttributionTokenCollection() instead")));
+    [Static]
+    [Export ("automaticAppleSearchAdsAttributionCollection")]
+    bool AutomaticAppleSearchAdsAttributionCollection { get; set; }
 
     // -(void)getCustomerInfoWithCompletion:(void (^ _Nonnull)(RCCustomerInfo * _Nullable, NSError * _Nullable))completion;
     [Export("getCustomerInfoWithCompletion:")]
@@ -712,43 +886,85 @@ interface RCPurchases
     // -(void)getProductsWithIdentifiers:(NSArray<NSString *> * _Nonnull)productIdentifiers completion:(void (^ _Nonnull)(NSArray<RCStoreProduct *> * _Nonnull))completion;
     [Export("getProductsWithIdentifiers:completion:")]
     void GetProductsWithIdentifiers(string[] productIdentifiers, Action<NSArray<RCStoreProduct>> completion);
+    
+    // -(void)products:(NSArray<NSString *> * _Nonnull)productIdentifiers completionHandler:(void (^ _Nonnull)(NSArray<RCStoreProduct *> * _Nonnull))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export ("products:completionHandler:")]
+    void Products (string[] productIdentifiers, Action<NSArray<RCStoreProduct>> completionHandler);
 
     // -(void)purchaseProduct:(RCStoreProduct * _Nonnull)product withCompletion:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, NSError * _Nullable, BOOL))completion;
     [Export("purchaseProduct:withCompletion:")]
     void PurchaseProduct(RCStoreProduct product,
         Action<RCStoreTransaction, RCCustomerInfo, NSError, bool> completion);
 
+    // -(void)purchaseWithProduct:(RCStoreProduct * _Nonnull)product completionHandler:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, BOOL, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("purchaseWithProduct:completionHandler:")]
+    void PurchaseWithProduct(RCStoreProduct product,
+        Action<RCStoreTransaction, RCCustomerInfo, bool, NSError> completionHandler);
+
     // -(void)purchasePackage:(RCPackage * _Nonnull)package withCompletion:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, NSError * _Nullable, BOOL))completion;
     [Export("purchasePackage:withCompletion:")]
     void PurchasePackage(RCPackage package, Action<RCStoreTransaction, RCCustomerInfo, NSError, bool> completion);
+
+    // -(void)purchaseWithPackage:(RCPackage * _Nonnull)package completionHandler:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, BOOL, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("purchaseWithPackage:completionHandler:")]
+    void PurchaseWithPackage(RCPackage package,
+        Action<RCStoreTransaction, RCCustomerInfo, bool, NSError> completionHandler);
+
+    // -(void)syncPurchasesWithCompletion:(void (^ _Nullable)(RCCustomerInfo * _Nullable, NSError * _Nullable))completion;
+    [Export("syncPurchasesWithCompletion:")]
+    void SyncPurchasesWithCompletion([NullAllowed] Action<RCCustomerInfo, NSError> completion);
+
+    // -(void)syncPurchasesWithCompletionHandler:(void (^ _Nonnull)(RCCustomerInfo * _Nullable, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("syncPurchasesWithCompletionHandler:")]
+    void SyncPurchasesWithCompletionHandler(Action<RCCustomerInfo, NSError> completionHandler);
+
+    // -(void)restorePurchasesWithCompletion:(void (^ _Nullable)(RCCustomerInfo * _Nullable, NSError * _Nullable))completion;
+    [Export("restorePurchasesWithCompletion:")]
+    void RestorePurchasesWithCompletion([NullAllowed] Action<RCCustomerInfo, NSError> completion);
+
+    // -(void)restorePurchasesWithCompletionHandler:(void (^ _Nonnull)(RCCustomerInfo * _Nullable, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("restorePurchasesWithCompletionHandler:")]
+    void RestorePurchasesWithCompletionHandler(Action<RCCustomerInfo, NSError> completionHandler);
 
     // -(void)purchaseProduct:(RCStoreProduct * _Nonnull)product withPromotionalOffer:(RCPromotionalOffer * _Nonnull)promotionalOffer completion:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, NSError * _Nullable, BOOL))completion __attribute__((availability(tvos, introduced=12.2))) __attribute__((availability(maccatalyst, introduced=13.0))) __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(macos, introduced=10.14.4))) __attribute__((availability(ios, introduced=12.2)));
     [Export("purchaseProduct:withPromotionalOffer:completion:")]
     void PurchaseProduct(RCStoreProduct product, RCPromotionalOffer promotionalOffer,
         Action<RCStoreTransaction, RCCustomerInfo, NSError, bool> completion);
 
+    // -(void)purchaseWithProduct:(RCStoreProduct * _Nonnull)product promotionalOffer:(RCPromotionalOffer * _Nonnull)promotionalOffer completionHandler:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, BOOL, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("purchaseWithProduct:promotionalOffer:completionHandler:")]
+    void PurchaseWithProduct(RCStoreProduct product, RCPromotionalOffer promotionalOffer,
+        Action<RCStoreTransaction, RCCustomerInfo, bool, NSError> completionHandler);
+
     // -(void)purchasePackage:(RCPackage * _Nonnull)package withPromotionalOffer:(RCPromotionalOffer * _Nonnull)promotionalOffer completion:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, NSError * _Nullable, BOOL))completion __attribute__((availability(tvos, introduced=12.2))) __attribute__((availability(maccatalyst, introduced=13.0))) __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(macos, introduced=10.14.4))) __attribute__((availability(ios, introduced=12.2)));
     [Export("purchasePackage:withPromotionalOffer:completion:")]
     void PurchasePackage(RCPackage package, RCPromotionalOffer promotionalOffer,
         Action<RCStoreTransaction, RCCustomerInfo, NSError, bool> completion);
 
-    // -(void)syncPurchasesWithCompletion:(void (^ _Nullable)(RCCustomerInfo * _Nullable, NSError * _Nullable))completion;
-    [Export("syncPurchasesWithCompletion:")]
-    void SyncPurchasesWithCompletion([NullAllowed] Action<RCCustomerInfo, NSError> completion);
-
-    // -(void)restorePurchasesWithCompletion:(void (^ _Nullable)(RCCustomerInfo * _Nullable, NSError * _Nullable))completion;
-    [Export("restorePurchasesWithCompletion:")]
-    void RestorePurchasesWithCompletion([NullAllowed] Action<RCCustomerInfo, NSError> completion);
+    // -(void)purchaseWithPackage:(RCPackage * _Nonnull)package promotionalOffer:(RCPromotionalOffer * _Nonnull)promotionalOffer completionHandler:(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, BOOL, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("purchaseWithPackage:promotionalOffer:completionHandler:")]
+    void PurchaseWithPackage(RCPackage package, RCPromotionalOffer promotionalOffer,
+        Action<RCStoreTransaction, RCCustomerInfo, bool, NSError> completionHandler);
 
     // -(void)checkTrialOrIntroDiscountEligibility:(NSArray<NSString *> * _Nonnull)productIdentifiers completion:(void (^ _Nonnull)(NSDictionary<NSString *,RCIntroEligibility *> * _Nonnull))completion;
     [Export("checkTrialOrIntroDiscountEligibility:completion:")]
     void CheckTrialOrIntroDiscountEligibility(string[] productIdentifiers,
         Action<NSDictionary<NSString, RCIntroEligibility>> completion);
 
+    // -(void)checkTrialOrIntroDiscountEligibilityWithProductIdentifiers:(NSArray<NSString *> * _Nonnull)productIdentifiers completionHandler:(void (^ _Nonnull)(NSDictionary<NSString *,RCIntroEligibility *> * _Nonnull))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("checkTrialOrIntroDiscountEligibilityWithProductIdentifiers:completionHandler:")]
+    void CheckTrialOrIntroDiscountEligibilityWithProductIdentifiers(string[] productIdentifiers,
+        Action<NSDictionary<NSString, RCIntroEligibility>> completionHandler);
+
     // -(void)checkTrialOrIntroDiscountEligibilityForProduct:(RCStoreProduct * _Nonnull)product completion:(void (^ _Nonnull)(enum RCIntroEligibilityStatus))completion;
     [Export("checkTrialOrIntroDiscountEligibilityForProduct:completion:")]
     void CheckTrialOrIntroDiscountEligibilityForProduct(RCStoreProduct product,
         Action<RCIntroEligibilityStatus> completion);
+
+    // -(void)checkTrialOrIntroDiscountEligibilityWithProduct:(RCStoreProduct * _Nonnull)product completionHandler:(void (^ _Nonnull)(enum RCIntroEligibilityStatus))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("checkTrialOrIntroDiscountEligibilityWithProduct:completionHandler:")]
+    void CheckTrialOrIntroDiscountEligibilityWithProduct(RCStoreProduct product,
+        Action<RCIntroEligibilityStatus> completionHandler);
 
     // -(void)showPriceConsentIfNeeded __attribute__((availability(maccatalyst, introduced=13.4))) __attribute__((availability(ios, introduced=13.4)));
     [Export("showPriceConsentIfNeeded")]
@@ -767,9 +983,23 @@ interface RCPurchases
     void GetPromotionalOfferForProductDiscount(RCStoreProductDiscount discount, RCStoreProduct product,
         Action<RCPromotionalOffer, NSError> completion);
 
+    // -(void)promotionalOfferForProductDiscount:(RCStoreProductDiscount * _Nonnull)discount product:(RCStoreProduct * _Nonnull)product completionHandler:(void (^ _Nonnull)(RCPromotionalOffer * _Nullable, NSError * _Nullable))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("promotionalOfferForProductDiscount:product:completionHandler:")]
+    void PromotionalOfferForProductDiscount(RCStoreProductDiscount discount, RCStoreProduct product,
+        Action<RCPromotionalOffer, NSError> completionHandler);
+
+    // -(void)eligiblePromotionalOffersForProduct:(RCStoreProduct * _Nonnull)product completionHandler:(void (^ _Nonnull)(NSArray<RCPromotionalOffer *> * _Nonnull))completionHandler __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=13.0))) __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0)));
+    [Export("eligiblePromotionalOffersForProduct:completionHandler:")]
+    void EligiblePromotionalOffersForProduct(RCStoreProduct product,
+        Action<NSArray<RCPromotionalOffer>> completionHandler);
+
     // -(void)showManageSubscriptionsWithCompletion:(void (^ _Nonnull)(NSError * _Nullable))completion __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0))) __attribute__((availability(tvos, unavailable))) __attribute__((availability(watchos, unavailable)));
     [Export("showManageSubscriptionsWithCompletion:")]
     void ShowManageSubscriptionsWithCompletion(Action<NSError> completion);
+
+    // -(void)showManageSubscriptionsWithCompletionHandler:(void (^ _Nonnull)(NSError * _Nullable))completionHandler __attribute__((availability(macos, introduced=10.15))) __attribute__((availability(ios, introduced=13.0))) __attribute__((availability(tvos, unavailable))) __attribute__((availability(watchos, unavailable)));
+    [Export("showManageSubscriptionsWithCompletionHandler:")]
+    void ShowManageSubscriptionsWithCompletionHandler(Action<NSError> completionHandler);
 
     // -(void)beginRefundRequestForProduct:(NSString * _Nonnull)productID completion:(void (^ _Nonnull)(enum RCRefundRequestStatus, NSError * _Nullable))completionHandler __attribute__((availability(tvos, unavailable))) __attribute__((availability(watchos, unavailable))) __attribute__((availability(macos, unavailable))) __attribute__((availability(ios, introduced=15.0)));
     [Export("beginRefundRequestForProduct:completion:")]
@@ -784,6 +1014,21 @@ interface RCPurchases
     [Export("beginRefundRequestForActiveEntitlementWithCompletion:")]
     void BeginRefundRequestForActiveEntitlementWithCompletion(
         Action<RCRefundRequestStatus, NSError> completionHandler);
+}
+
+// @protocol PurchasesOrchestratorDelegate
+[Protocol,Model]
+interface PurchasesOrchestratorDelegate
+{
+    // @required -(void)readyForPromotedProduct:(RCStoreProduct * _Nonnull)product purchase:(void (^ _Nonnull)(void (^ _Nonnull)(RCStoreTransaction * _Nullable, RCCustomerInfo * _Nullable, NSError * _Nullable, BOOL)))startPurchase;
+    [Abstract]
+    [Export ("readyForPromotedProduct:purchase:")]
+    void Purchase (RCStoreProduct product, Action<RCStoreTransaction, RCCustomerInfo, NSError, bool> startPurchase);
+
+    // @required @property (readonly, nonatomic) BOOL shouldShowPriceConsent __attribute__((availability(watchos, unavailable))) __attribute__((availability(tvos, unavailable))) __attribute__((availability(macos, unavailable))) __attribute__((availability(maccatalyst, introduced=13.4))) __attribute__((availability(ios, introduced=13.4)));
+    [Abstract]
+    [Export ("shouldShowPriceConsent")]
+    bool ShouldShowPriceConsent { get; }
 }
 
 // @interface RCPlatformInfo : NSObject
@@ -811,9 +1056,107 @@ interface RCPurchasesDelegate
     void ReadyForPromotedProduct(RCPurchases purchases, RCStoreProduct product, StartPurchaseHandler startPurchase);
 
     // @optional @property (readonly, nonatomic) BOOL shouldShowPriceConsent __attribute__((availability(watchos, unavailable))) __attribute__((availability(tvos, unavailable))) __attribute__((availability(macos, unavailable))) __attribute__((availability(maccatalyst, introduced=13.4))) __attribute__((availability(ios, introduced=13.4)));
-    [Export("shouldShowPriceConsent")]
-    bool ShouldShowPriceConsent { get; }
+    [Export("shouldShowPriceConsent")] bool ShouldShowPriceConsent { get; }
 }
+
+[BaseType(typeof(NSObject))]
+[DisableDefaultCtor]
+interface RCPurchasesDiagnostics
+{
+    // @property (readonly, getter = default, nonatomic, strong, class) RCPurchasesDiagnostics * _Nonnull default_;
+    [Static]
+    [Export("default_", ArgumentSemantic.Strong)]
+    RCPurchasesDiagnostics Default_ { [Bind("default")] get; }
+
+    // -(void)testSDKHealthWithCompletion:(void (^ _Nonnull)(NSError * _Nullable))completionHandler;
+    [Export("testSDKHealthWithCompletion:")]
+    void TestSDKHealthWithCompletion(Action<NSError> completionHandler);
+}
+
+/*// @interface PurchasesReceiptParser : NSObject
+[BaseType(typeof(NSObject))]
+[DisableDefaultCtor]
+interface PurchasesReceiptParser
+{
+    // -(BOOL)receiptHasTransactionsWithReceiptData:(NSData * _Nonnull)receiptData __attribute__((warn_unused_result("")));
+    [Export("receiptHasTransactionsWithReceiptData:")]
+    bool ReceiptHasTransactionsWithReceiptData(NSData receiptData);
+
+    // @property (readonly, getter = default, nonatomic, strong, class) PurchasesReceiptParser * _Nonnull default_;
+    [Static]
+    [Export("default_", ArgumentSemantic.Strong)]
+    PurchasesReceiptParser Default_ { [Bind("default")] get; }
+}*/
+
+// @interface RedirectLoggerSessionDelegate : NSObject <NSURLSessionTaskDelegate>
+/*[BaseType(typeof(NSObject))]
+interface RedirectLoggerSessionDelegate : INSUrlSessionTaskDelegate
+{
+    // -(void)URLSession:(NSURLSession * _Nonnull)session task:(NSURLSessionTask * _Nonnull)task willPerformHTTPRedirection:(NSHTTPURLResponse * _Nonnull)response newRequest:(NSURLRequest * _Nonnull)request completionHandler:(void (^ _Nonnull)(NSURLRequest * _Nullable))completionHandler;
+    [Export("URLSession:task:willPerformHTTPRedirection:newRequest:completionHandler:")]
+    void URLSession(NSUrlSession session, NSUrlSessionTask task, NSHttpUrlResponse response, NSUrlRequest request,
+        Action<NSUrlRequest> completionHandler);
+}*/
+
+// @interface StoreKit1Wrapper : NSObject
+/*[BaseType(typeof(NSObject))]
+[DisableDefaultCtor]
+interface StoreKit1Wrapper
+{
+    // @property (readonly, nonatomic, strong) RCStorefront * _Nullable currentStorefront;
+    [NullAllowed, Export("currentStorefront", ArgumentSemantic.Strong)]
+    RCStorefront CurrentStorefront { get; }
+
+    // -(BOOL)paymentQueueShouldShowPriceConsent:(SKPaymentQueue * _Nonnull)paymentQueue __attribute__((warn_unused_result(""))) __attribute__((availability(maccatalyst, introduced=13.4))) __attribute__((availability(ios, introduced=13.4)));
+    [Export("paymentQueueShouldShowPriceConsent:")]
+    bool PaymentQueueShouldShowPriceConsent(SKPaymentQueue paymentQueue);
+
+    // -(void)finishTransaction:(SKPaymentTransaction * _Nonnull)transaction completion:(void (^ _Nonnull)(void))completion;
+    [Export("finishTransaction:completion:")]
+    void FinishTransaction(SKPaymentTransaction transaction, Action completion);
+
+    // -(void)showPriceConsentIfNeeded __attribute__((availability(maccatalyst, introduced=13.4))) __attribute__((availability(ios, introduced=13.4)));
+    [Export("showPriceConsentIfNeeded")]
+    void ShowPriceConsentIfNeeded();
+
+    // -(void)presentCodeRedemptionSheet __attribute__((availability(ios, introduced=14.0)));
+    [Export("presentCodeRedemptionSheet")]
+    void PresentCodeRedemptionSheet();
+
+    // -(void)paymentQueue:(SKPaymentQueue * _Nonnull)queue updatedTransactions:(NSArray<SKPaymentTransaction *> * _Nonnull)transactions;
+    [Export("paymentQueue:updatedTransactions:")]
+    void PaymentQueueUpdatedTransactions(SKPaymentQueue queue, SKPaymentTransaction[] transactions);
+
+    // -(void)paymentQueue:(SKPaymentQueue * _Nonnull)queue removedTransactions:(NSArray<SKPaymentTransaction *> * _Nonnull)transactions;
+    [Export("paymentQueue:removedTransactions:")]
+    void PaymentQueueRemovedTransactions(SKPaymentQueue queue, SKPaymentTransaction[] transactions);
+
+    // -(BOOL)paymentQueue:(SKPaymentQueue * _Nonnull)queue shouldAddStorePayment:(SKPayment * _Nonnull)payment forProduct:(SKProduct * _Nonnull)product __attribute__((swift_name("paymentQueue(_:shouldAddStorePayment:for:)"))) __attribute__((warn_unused_result("")));
+    [Export("paymentQueue:shouldAddStorePayment:forProduct:")]
+    bool PaymentQueueShouldAddStorePayment(SKPaymentQueue queue, SKPayment payment, SKProduct product);
+
+    // -(void)paymentQueue:(SKPaymentQueue * _Nonnull)queue didRevokeEntitlementsForProductIdentifiers:(NSArray<NSString *> * _Nonnull)productIdentifiers __attribute__((swift_name("paymentQueue(_:didRevokeEntitlementsForProductIdentifiers:)"))) __attribute__((availability(watchos, introduced=7.0))) __attribute__((availability(tvos, introduced=14.0))) __attribute__((availability(macos, introduced=11.0))) __attribute__((availability(ios, introduced=14.0)));
+    [Export("paymentQueue:didRevokeEntitlementsForProductIdentifiers:")]
+    void PaymentQueueDidRevokeEntitlementsForProductIdentifiers(SKPaymentQueue queue, string[] productIdentifiers);
+
+    // -(void)paymentQueueDidChangeStorefront:(SKPaymentQueue * _Nonnull)queue;
+    [Export("paymentQueueDidChangeStorefront:")]
+    void PaymentQueueDidChangeStorefront(SKPaymentQueue queue);
+}*/
+
+// @interface StoreKitRequestFetcher : NSObject
+/*[BaseType(typeof(NSObject))]
+[DisableDefaultCtor]
+interface StoreKitRequestFetcher
+{
+    // -(void)requestDidFinish:(SKRequest * _Nonnull)request;
+    [Export("requestDidFinish:")]
+    void RequestDidFinish(SKRequest request);
+
+    // -(void)request:(SKRequest * _Nonnull)request didFailWithError:(NSError * _Nonnull)error;
+    [Export("request:didFailWithError:")]
+    void Request(SKRequest request, NSError error);
+}*/
 
 // @interface RCStoreProduct : NSObject
 [BaseType(typeof(NSObject))]
@@ -850,8 +1193,7 @@ interface RCStoreProduct : INativeObject
     [Export("productIdentifier")] string ProductIdentifier { get; }
 
     // @property (readonly, nonatomic) BOOL isFamilyShareable __attribute__((availability(watchos, introduced=8.0))) __attribute__((availability(tvos, introduced=14.0))) __attribute__((availability(macos, introduced=11.0))) __attribute__((availability(ios, introduced=14.0)));
-    [Export("isFamilyShareable")]
-    bool IsFamilyShareable { get; }
+    [Export("isFamilyShareable")] bool IsFamilyShareable { get; }
 
     // @property (readonly, copy, nonatomic) SWIFT_AVAILABILITY(watchos,introduced=6.2) NSString * subscriptionGroupIdentifier __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(macos, introduced=10.14))) __attribute__((availability(tvos, introduced=12.0))) __attribute__((availability(maccatalyst, introduced=13.0))) __attribute__((availability(ios, introduced=12.0)));
     [Export("subscriptionGroupIdentifier")]
@@ -873,6 +1215,14 @@ interface RCStoreProduct : INativeObject
     [Export("discounts", ArgumentSemantic.Copy)]
     RCStoreProductDiscount[] Discounts { get; }
 
+    // -(instancetype _Nonnull)initWithSk1Product:(SKProduct * _Nonnull)sk1Product;
+    [Export("initWithSk1Product:")]
+    IntPtr Constructor(SKProduct sk1Product);
+
+    // @property (readonly, nonatomic, strong) SKProduct * _Nullable sk1Product;
+    [NullAllowed, Export("sk1Product", ArgumentSemantic.Strong)]
+    SKProduct Sk1Product { get; }
+
     // @property (readonly, nonatomic, strong) NSDecimalNumber * _Nonnull price;
     [Export("price", ArgumentSemantic.Strong)]
     NSDecimalNumber Price { get; }
@@ -881,17 +1231,13 @@ interface RCStoreProduct : INativeObject
     [Export("pricePerMonth", ArgumentSemantic.Strong)]
     NSDecimalNumber PricePerMonth { get; }
 
+    // @property (readonly, nonatomic, strong) SWIFT_AVAILABILITY(watchos,introduced=6.2) NSDecimalNumber * pricePerYear __attribute__((availability(watchos, introduced=6.2))) __attribute__((availability(tvos, introduced=11.2))) __attribute__((availability(macos, introduced=10.13.2))) __attribute__((availability(ios, introduced=11.2)));
+    [Export("pricePerYear", ArgumentSemantic.Strong)]
+    NSDecimalNumber PricePerYear { get; }
+
     // @property (readonly, copy, nonatomic) NSString * _Nullable localizedIntroductoryPriceString;
     [NullAllowed, Export("localizedIntroductoryPriceString")]
     string LocalizedIntroductoryPriceString { get; }
-
-    // -(instancetype _Nonnull)initWithSk1Product:(SKProduct * _Nonnull)sk1Product;
-    [Export("initWithSk1Product:")]
-    IntPtr Constructor(SKProduct sk1Product);
-
-    // @property (readonly, nonatomic, strong) SKProduct * _Nullable sk1Product;
-    [NullAllowed, Export("sk1Product", ArgumentSemantic.Strong)]
-    SKProduct Sk1Product { get; }
 }
 
 // @interface RCStoreProductDiscount : NSObject
@@ -930,6 +1276,9 @@ interface RCStoreProductDiscount
     // @property (readonly, nonatomic) NSUInteger hash;
     [Export("hash")] nuint Hash { get; }
 
+    // @property (readonly, copy, nonatomic) NSString * _Nonnull description;
+    [Export("description")] string Description { get; }
+
     // @property (readonly, nonatomic, strong) NSDecimalNumber * _Nonnull price;
     [Export("price", ArgumentSemantic.Strong)]
     NSDecimalNumber Price { get; }
@@ -957,6 +1306,10 @@ interface RCStoreTransaction
     // @property (readonly, nonatomic) NSInteger quantity;
     [Export("quantity")] nint Quantity { get; }
 
+    // @property (readonly, nonatomic, strong) RCStorefront * _Nullable storefront;
+    [NullAllowed, Export("storefront", ArgumentSemantic.Strong)]
+    RCStorefront Storefront { get; }
+
     // -(BOOL)isEqual:(id _Nullable)object __attribute__((warn_unused_result("")));
     [Export("isEqual:")]
     [Override]
@@ -964,6 +1317,9 @@ interface RCStoreTransaction
 
     // @property (readonly, nonatomic) NSUInteger hash;
     [Export("hash")] nuint Hash { get; }
+
+    // @property (readonly, copy, nonatomic) NSString * _Nonnull description;
+    [Export("description")] string Description { get; }
 
     // @property (readonly, nonatomic, strong) SKPaymentTransaction * _Nullable sk1Transaction;
     [NullAllowed, Export("sk1Transaction", ArgumentSemantic.Strong)]
@@ -1022,5 +1378,7 @@ interface RCSubscriptionPeriod
     [Export("hash")] nuint Hash { get; }
 
     // @property (readonly, copy, nonatomic) NSString * _Nonnull debugDescription;
-    [Export("debugDescription")] [Override] string DebugDescription { get; }
+    [Export("debugDescription")]
+    [Override]
+    string DebugDescription { get; }
 }
