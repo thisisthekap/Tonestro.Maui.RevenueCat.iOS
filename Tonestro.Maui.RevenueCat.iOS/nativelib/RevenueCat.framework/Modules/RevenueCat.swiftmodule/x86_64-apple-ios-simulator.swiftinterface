@@ -14,12 +14,14 @@ import UIKit
 import _Concurrency
 import _StoreKit_SwiftUI
 import _StringProcessing
-@_hasMissingDesignatedInitializers @objc(RCOffering) final public class Offering : ObjectiveC.NSObject {
+import os
+@objc(RCOffering) final public class Offering : ObjectiveC.NSObject {
   @objc final public let identifier: Swift.String
   @objc final public let serverDescription: Swift.String
   @objc final public var metadata: [Swift.String : Any] {
     @objc get
   }
+  final public let paywall: RevenueCat.PaywallData?
   @objc final public let availablePackages: [RevenueCat.Package]
   @objc final public let lifetime: RevenueCat.Package?
   @objc final public let annual: RevenueCat.Package?
@@ -35,10 +37,13 @@ import _StringProcessing
   @objc final public subscript(key: Swift.String) -> RevenueCat.Package? {
     @objc get
   }
+  @objc convenience public init(identifier: Swift.String, serverDescription: Swift.String, metadata: [Swift.String : Any] = [:], availablePackages: [RevenueCat.Package])
+  public init(identifier: Swift.String, serverDescription: Swift.String, metadata: [Swift.String : Any] = [:], paywall: RevenueCat.PaywallData? = nil, availablePackages: [RevenueCat.Package])
   @objc deinit
 }
 extension RevenueCat.Offering {
   final public func getMetadataValue<T>(for key: Swift.String, default: T) -> T
+  final public func getMetadataValue<T>(for key: Swift.String) -> T? where T : Swift.Decodable
 }
 extension RevenueCat.Offering : Swift.Identifiable {
   final public var id: Swift.String {
@@ -47,6 +52,55 @@ extension RevenueCat.Offering : Swift.Identifiable {
   public typealias ID = Swift.String
 }
 extension RevenueCat.Offering : Swift.Sendable {
+}
+public enum PaywallEvent {
+  public typealias ID = Foundation.UUID
+  public typealias SessionID = Foundation.UUID
+  case impression(RevenueCat.PaywallEvent.CreationData, RevenueCat.PaywallEvent.Data)
+  case cancel(RevenueCat.PaywallEvent.CreationData, RevenueCat.PaywallEvent.Data)
+  case close(RevenueCat.PaywallEvent.CreationData, RevenueCat.PaywallEvent.Data)
+}
+extension RevenueCat.PaywallEvent {
+  public struct CreationData {
+    public var id: RevenueCat.PaywallEvent.ID
+    public var date: Foundation.Date
+    public init(id: RevenueCat.PaywallEvent.ID = .init(), date: Foundation.Date = .init())
+  }
+}
+extension RevenueCat.PaywallEvent {
+  public struct Data {
+    public var offeringIdentifier: Swift.String
+    public var paywallRevision: Swift.Int
+    public var sessionIdentifier: RevenueCat.PaywallEvent.SessionID
+    public var displayMode: RevenueCat.PaywallViewMode
+    public var localeIdentifier: Swift.String
+    public var darkMode: Swift.Bool
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public init(offering: RevenueCat.Offering, paywall: RevenueCat.PaywallData, sessionID: RevenueCat.PaywallEvent.SessionID, displayMode: RevenueCat.PaywallViewMode, locale: Foundation.Locale, darkMode: Swift.Bool)
+  }
+}
+extension RevenueCat.PaywallEvent {
+  public var creationData: RevenueCat.PaywallEvent.CreationData {
+    get
+  }
+  public var data: RevenueCat.PaywallEvent.Data {
+    get
+  }
+}
+extension RevenueCat.PaywallEvent.CreationData : Swift.Equatable, Swift.Codable, Swift.Sendable {
+  public static func == (a: RevenueCat.PaywallEvent.CreationData, b: RevenueCat.PaywallEvent.CreationData) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallEvent.Data : Swift.Equatable, Swift.Codable, Swift.Sendable {
+  public static func == (a: RevenueCat.PaywallEvent.Data, b: RevenueCat.PaywallEvent.Data) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallEvent : Swift.Equatable, Swift.Codable, Swift.Sendable {
+  public static func == (a: RevenueCat.PaywallEvent, b: RevenueCat.PaywallEvent) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
 }
 infix operator ??? : DefaultPrecedence
 @_hasMissingDesignatedInitializers @objc(RCOfferings) final public class Offerings : ObjectiveC.NSObject {
@@ -83,6 +137,11 @@ extension RevenueCat.Purchases {
   @available(watchOS, unavailable)
   @available(tvOS, unavailable)
   final public func beginRefundRequestForActiveEntitlement(completion: @escaping (Swift.Result<RevenueCat.RefundRequestStatus, RevenueCat.PublicError>) -> Swift.Void)
+  @available(iOS 16.0, *)
+  @available(macOS, unavailable)
+  @available(watchOS, unavailable)
+  @available(tvOS, unavailable)
+  final public func showStoreMessages(for types: Swift.Set<RevenueCat.StoreMessageType> = Set(StoreMessageType.allCases), completion: @escaping () -> Swift.Void)
 }
 @_hasMissingDesignatedInitializers @objc(RCStorefront) final public class Storefront : ObjectiveC.NSObject {
   @objc final public var countryCode: Swift.String {
@@ -125,6 +184,29 @@ extension RevenueCat.Storefront {
     get
   }
 }
+@objc(RCVerificationResult) public enum VerificationResult : Swift.Int {
+  case notRequested = 0
+  case verified = 1
+  case verifiedOnDevice = 3
+  case failed = 2
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.VerificationResult : Swift.Sendable, Swift.Codable {
+}
+extension RevenueCat.VerificationResult {
+  public var isVerified: Swift.Bool {
+    get
+  }
+}
+extension RevenueCat.VerificationResult : Swift.CustomDebugStringConvertible {
+  public var debugDescription: Swift.String {
+    get
+  }
+}
 @_hasMissingDesignatedInitializers @objc(RCAttribution) final public class Attribution : ObjectiveC.NSObject {
   @objc deinit
 }
@@ -147,6 +229,7 @@ extension RevenueCat.Attribution {
   @objc final public func setFBAnonymousID(_ fbAnonymousID: Swift.String?)
   @objc final public func setMparticleID(_ mparticleID: Swift.String?)
   @objc final public func setOnesignalID(_ onesignalID: Swift.String?)
+  @objc final public func setOnesignalUserID(_ onesignalUserID: Swift.String?)
   @objc final public func setAirshipChannelID(_ airshipChannelID: Swift.String?)
   @objc final public func setCleverTapID(_ cleverTapID: Swift.String?)
   @objc final public func setMixpanelDistinctID(_ mixpanelDistinctID: Swift.String?)
@@ -181,6 +264,10 @@ extension RevenueCat.StoreProduct {
       get
     }
   }
+}
+extension RevenueCat.StoreProduct.ProductCategory : Swift.Sendable {
+}
+extension RevenueCat.StoreProduct.ProductType : Swift.Sendable {
 }
 extension RevenueCat.Purchases {
   @available(iOS, obsoleted: 1, renamed: "restorePurchases(completion:)")
@@ -596,6 +683,221 @@ extension RevenueCat.PromotionalOffer : Swift.Sendable {
 }
 extension RevenueCat.PromotionalOffer.SignedData : Swift.Sendable {
 }
+public struct PaywallData {
+  public var templateName: Swift.String
+  public var config: RevenueCat.PaywallData.Configuration
+  public var assetBaseURL: Foundation.URL
+  public var revision: Swift.Int {
+    get
+    set
+  }
+}
+public protocol PaywallLocalizedConfiguration {
+  var title: Swift.String { get }
+  var subtitle: Swift.String? { get }
+  var callToAction: Swift.String { get }
+  var callToActionWithIntroOffer: Swift.String? { get }
+  var offerDetails: Swift.String? { get }
+  var offerDetailsWithIntroOffer: Swift.String? { get }
+  var offerName: Swift.String? { get }
+  var features: [RevenueCat.PaywallData.LocalizedConfiguration.Feature] { get }
+}
+extension RevenueCat.PaywallData {
+  public struct LocalizedConfiguration : RevenueCat.PaywallLocalizedConfiguration {
+    public var title: Swift.String
+    public var callToAction: Swift.String
+    public var subtitle: Swift.String? {
+      get
+      set
+    }
+    public var callToActionWithIntroOffer: Swift.String? {
+      get
+      set
+    }
+    public var offerDetails: Swift.String? {
+      get
+      set
+    }
+    public var offerDetailsWithIntroOffer: Swift.String? {
+      get
+      set
+    }
+    public var offerName: Swift.String? {
+      get
+      set
+    }
+    public var features: [RevenueCat.PaywallData.LocalizedConfiguration.Feature] {
+      get
+      set
+    }
+    public init(title: Swift.String, subtitle: Swift.String? = nil, callToAction: Swift.String, callToActionWithIntroOffer: Swift.String? = nil, offerDetails: Swift.String?, offerDetailsWithIntroOffer: Swift.String? = nil, offerName: Swift.String? = nil, features: [RevenueCat.PaywallData.LocalizedConfiguration.Feature] = [])
+  }
+  public func config(for requiredLocale: Foundation.Locale) -> RevenueCat.PaywallData.LocalizedConfiguration?
+}
+extension RevenueCat.PaywallData.LocalizedConfiguration {
+  public struct Feature {
+    public var title: Swift.String
+    public var content: Swift.String?
+    public var iconID: Swift.String?
+    public init(title: Swift.String, content: Swift.String? = nil, iconID: Swift.String? = nil)
+  }
+}
+extension RevenueCat.PaywallData {
+  public struct Configuration {
+    public var packages: [Swift.String]
+    public var defaultPackage: Swift.String?
+    public var images: RevenueCat.PaywallData.Configuration.Images
+    public var blurredBackgroundImage: Swift.Bool {
+      get
+      set
+    }
+    public var displayRestorePurchases: Swift.Bool {
+      get
+      set
+    }
+    public var termsOfServiceURL: Foundation.URL? {
+      get
+      set
+    }
+    public var privacyURL: Foundation.URL? {
+      get
+      set
+    }
+    public var colors: RevenueCat.PaywallData.Configuration.ColorInformation
+    public init(packages: [Swift.String], defaultPackage: Swift.String? = nil, images: RevenueCat.PaywallData.Configuration.Images, colors: RevenueCat.PaywallData.Configuration.ColorInformation, blurredBackgroundImage: Swift.Bool = false, displayRestorePurchases: Swift.Bool = true, termsOfServiceURL: Foundation.URL? = nil, privacyURL: Foundation.URL? = nil)
+  }
+}
+extension RevenueCat.PaywallData.Configuration {
+  public struct Images {
+    public var header: Swift.String? {
+      get
+      set
+    }
+    public var background: Swift.String? {
+      get
+      set
+    }
+    public var icon: Swift.String? {
+      get
+      set
+    }
+    public init(header: Swift.String? = nil, background: Swift.String? = nil, icon: Swift.String? = nil)
+  }
+}
+extension RevenueCat.PaywallData.Configuration {
+  public struct ColorInformation {
+    public var light: RevenueCat.PaywallData.Configuration.Colors
+    public var dark: RevenueCat.PaywallData.Configuration.Colors?
+    public init(light: RevenueCat.PaywallData.Configuration.Colors, dark: RevenueCat.PaywallData.Configuration.Colors? = nil)
+  }
+  public struct Colors {
+    public var background: RevenueCat.PaywallColor
+    public var text1: RevenueCat.PaywallColor
+    public var text2: RevenueCat.PaywallColor?
+    public var text3: RevenueCat.PaywallColor?
+    public var callToActionBackground: RevenueCat.PaywallColor
+    public var callToActionForeground: RevenueCat.PaywallColor
+    public var callToActionSecondaryBackground: RevenueCat.PaywallColor?
+    public var accent1: RevenueCat.PaywallColor?
+    public var accent2: RevenueCat.PaywallColor?
+    public var accent3: RevenueCat.PaywallColor?
+    public init(background: RevenueCat.PaywallColor, text1: RevenueCat.PaywallColor, text2: RevenueCat.PaywallColor? = nil, text3: RevenueCat.PaywallColor? = nil, callToActionBackground: RevenueCat.PaywallColor, callToActionForeground: RevenueCat.PaywallColor, callToActionSecondaryBackground: RevenueCat.PaywallColor? = nil, accent1: RevenueCat.PaywallColor? = nil, accent2: RevenueCat.PaywallColor? = nil, accent3: RevenueCat.PaywallColor? = nil)
+  }
+}
+extension RevenueCat.PaywallData {
+  public init(templateName: Swift.String, config: RevenueCat.PaywallData.Configuration, localization: RevenueCat.PaywallData.LocalizedConfiguration, assetBaseURL: Foundation.URL, revision: Swift.Int = 0)
+}
+extension RevenueCat.PaywallData.LocalizedConfiguration.Feature : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallData.LocalizedConfiguration : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallData.Configuration.ColorInformation : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallData.Configuration.Colors : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallData.Configuration.Images : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallData.Configuration : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallData : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+extension RevenueCat.PaywallData.LocalizedConfiguration.Feature : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: RevenueCat.PaywallData.LocalizedConfiguration.Feature, b: RevenueCat.PaywallData.LocalizedConfiguration.Feature) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallData.LocalizedConfiguration : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: RevenueCat.PaywallData.LocalizedConfiguration, b: RevenueCat.PaywallData.LocalizedConfiguration) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallData.Configuration.ColorInformation : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: RevenueCat.PaywallData.Configuration.ColorInformation, b: RevenueCat.PaywallData.Configuration.ColorInformation) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallData.Configuration.Colors : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: RevenueCat.PaywallData.Configuration.Colors, b: RevenueCat.PaywallData.Configuration.Colors) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallData.Configuration.Images : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: RevenueCat.PaywallData.Configuration.Images, b: RevenueCat.PaywallData.Configuration.Images) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallData.Configuration : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: RevenueCat.PaywallData.Configuration, b: RevenueCat.PaywallData.Configuration) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallData : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public static func == (a: RevenueCat.PaywallData, b: RevenueCat.PaywallData) -> Swift.Bool
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallData.LocalizedConfiguration.Feature : Swift.Sendable {
+}
+extension RevenueCat.PaywallData.LocalizedConfiguration : Swift.Sendable {
+}
+extension RevenueCat.PaywallData.Configuration.ColorInformation : Swift.Sendable {
+}
+extension RevenueCat.PaywallData.Configuration.Colors : Swift.Sendable {
+}
+extension RevenueCat.PaywallData.Configuration.Images : Swift.Sendable {
+}
+extension RevenueCat.PaywallData.Configuration : Swift.Sendable {
+}
+extension RevenueCat.PaywallData : Swift.Sendable {
+}
 @_hasMissingDesignatedInitializers @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
 @objc(RCPurchasesDiagnostics) final public class PurchasesDiagnostics : ObjectiveC.NSObject {
   @objc public static let `default`: RevenueCat.PurchasesDiagnostics
@@ -627,6 +929,9 @@ extension RevenueCat.PurchasesDiagnostics.Error : Foundation.CustomNSError {
   @objc final public let productIdentifier: Swift.String
   @objc final public let purchaseDate: Foundation.Date
   @objc final public let transactionIdentifier: Swift.String
+  @objc override final public var description: Swift.String {
+    @objc get
+  }
   @objc deinit
 }
 extension RevenueCat.NonSubscriptionTransaction : Swift.Sendable {
@@ -1103,6 +1408,9 @@ extension RevenueCat.PeriodType : Swift.Sendable {
   @objc final public var productIdentifier: Swift.String {
     @objc get
   }
+  @objc final public var productPlanIdentifier: Swift.String? {
+    @objc get
+  }
   @objc final public var isSandbox: Swift.Bool {
     @objc get
   }
@@ -1113,6 +1421,10 @@ extension RevenueCat.PeriodType : Swift.Sendable {
     @objc get
   }
   @objc final public var ownershipType: RevenueCat.PurchaseOwnershipType {
+    @objc get
+  }
+  @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
+  @objc final public var verification: RevenueCat.VerificationResult {
     @objc get
   }
   @objc final public let rawData: [Swift.String : Any]
@@ -1205,6 +1517,10 @@ extension RevenueCat.PackageType : Swift.CustomDebugStringConvertible {
   public var debugDescription: Swift.String {
     get
   }
+}
+extension RevenueCat.PackageType : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
 }
 public typealias SK1Transaction = StoreKit.SKPaymentTransaction
 @available(iOS 15.0, tvOS 15.0, watchOS 8.0, macOS 12.0, *)
@@ -1321,6 +1637,9 @@ extension RevenueCat.Purchases {
   @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   @objc final public func offerings() async throws -> RevenueCat.Offerings
   #endif
+  @objc final public var cachedOfferings: RevenueCat.Offerings? {
+    @objc get
+  }
 }
 extension RevenueCat.Purchases {
   final public func logIn(_ appUserID: Swift.StaticString, completion: @escaping (RevenueCat.CustomerInfo?, Swift.Bool, RevenueCat.PublicError?) -> Swift.Void)
@@ -1350,6 +1669,9 @@ extension RevenueCat.Purchases {
   @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   @objc final public func customerInfo(fetchPolicy: RevenueCat.CacheFetchPolicy) async throws -> RevenueCat.CustomerInfo
   #endif
+  @objc final public var cachedCustomerInfo: RevenueCat.CustomerInfo? {
+    @objc get
+  }
   @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   final public var customerInfoStream: _Concurrency.AsyncStream<RevenueCat.CustomerInfo> {
     get
@@ -1373,15 +1695,16 @@ extension RevenueCat.Purchases {
   @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   @objc final public func purchase(package: RevenueCat.Package) async throws -> RevenueCat.PurchaseResultData
   #endif
-  @objc final public func syncPurchases(completion: ((RevenueCat.CustomerInfo?, RevenueCat.PublicError?) -> Swift.Void)?)
-  #if compiler(>=5.3) && $AsyncAwait
-  @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
-  @objc final public func syncPurchases() async throws -> RevenueCat.CustomerInfo
-  #endif
   @objc final public func restorePurchases(completion: ((RevenueCat.CustomerInfo?, RevenueCat.PublicError?) -> Swift.Void)? = nil)
   #if compiler(>=5.3) && $AsyncAwait
   @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   @objc final public func restorePurchases() async throws -> RevenueCat.CustomerInfo
+  #endif
+  @objc final public func invalidateCustomerInfoCache()
+  @objc final public func syncPurchases(completion: ((RevenueCat.CustomerInfo?, RevenueCat.PublicError?) -> Swift.Void)?)
+  #if compiler(>=5.3) && $AsyncAwait
+  @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
+  @objc final public func syncPurchases() async throws -> RevenueCat.CustomerInfo
   #endif
   #if compiler(>=5.3) && $Sendable
   @available(iOS 12.2, macOS 10.14.4, watchOS 6.2, macCatalyst 13.0, tvOS 12.2, *)
@@ -1404,6 +1727,10 @@ extension RevenueCat.Purchases {
   @available(iOS 13.0, tvOS 13.0, macOS 10.15, watchOS 6.2, *)
   @objc final public func checkTrialOrIntroDiscountEligibility(productIdentifiers: [Swift.String]) async -> [Swift.String : RevenueCat.IntroEligibility]
   #endif
+  #if compiler(>=5.3) && $AsyncAwait
+  @available(iOS 13.0, tvOS 13.0, macOS 10.15, watchOS 6.2, *)
+  final public func checkTrialOrIntroDiscountEligibility(packages: [RevenueCat.Package]) async -> [RevenueCat.Package : RevenueCat.IntroEligibility]
+  #endif
   @objc(checkTrialOrIntroDiscountEligibilityForProduct:completion:) final public func checkTrialOrIntroDiscountEligibility(product: RevenueCat.StoreProduct, completion: @escaping (RevenueCat.IntroEligibilityStatus) -> Swift.Void)
   #if compiler(>=5.3) && $AsyncAwait
   @available(iOS 13.0, tvOS 13.0, macOS 10.15, watchOS 6.2, *)
@@ -1411,7 +1738,6 @@ extension RevenueCat.Purchases {
   #endif
   @available(iOS 13.4, macCatalyst 13.4, *)
   @objc final public func showPriceConsentIfNeeded()
-  @objc final public func invalidateCustomerInfoCache()
   @available(iOS 14.0, *)
   @available(watchOS, unavailable)
   @available(tvOS, unavailable)
@@ -1458,6 +1784,19 @@ extension RevenueCat.Purchases {
   @available(watchOS, unavailable)
   @available(tvOS, unavailable)
   @objc(beginRefundRequestForActiveEntitlementWithCompletion:) final public func beginRefundRequestForActiveEntitlement() async throws -> RevenueCat.RefundRequestStatus
+  #endif
+  #if compiler(>=5.3) && $AsyncAwait
+  @available(iOS 16.0, *)
+  @available(macOS, unavailable)
+  @available(watchOS, unavailable)
+  @available(tvOS, unavailable)
+  final public func showStoreMessages(for types: Swift.Set<RevenueCat.StoreMessageType> = Set(StoreMessageType.allCases)) async
+  #endif
+}
+@available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *)
+extension RevenueCat.Purchases {
+  #if compiler(>=5.3) && $AsyncAwait
+  final public func track(paywallEvent: RevenueCat.PaywallEvent) async
   #endif
 }
 extension RevenueCat.Purchases {
@@ -1557,6 +1896,29 @@ extension RevenueCat.PurchaseOwnershipType : Swift.CaseIterable {
 }
 extension RevenueCat.PurchaseOwnershipType : Swift.Sendable {
 }
+public struct TestStoreProduct {
+  public var localizedTitle: Swift.String
+  public var price: Foundation.Decimal
+  public var localizedPriceString: Swift.String
+  public var productIdentifier: Swift.String
+  public var productType: RevenueCat.StoreProduct.ProductType
+  public var localizedDescription: Swift.String
+  public var subscriptionGroupIdentifier: Swift.String?
+  public var subscriptionPeriod: RevenueCat.SubscriptionPeriod?
+  public var isFamilyShareable: Swift.Bool
+  public var introductoryDiscount: RevenueCat.StoreProductDiscount?
+  public var discounts: [RevenueCat.StoreProductDiscount]
+  public var locale: Foundation.Locale
+  public init(localizedTitle: Swift.String, price: Foundation.Decimal, localizedPriceString: Swift.String, productIdentifier: Swift.String, productType: RevenueCat.StoreProduct.ProductType, localizedDescription: Swift.String, subscriptionGroupIdentifier: Swift.String? = nil, subscriptionPeriod: RevenueCat.SubscriptionPeriod? = nil, isFamilyShareable: Swift.Bool = false, introductoryDiscount: RevenueCat.TestStoreProductDiscount? = nil, discounts: [RevenueCat.TestStoreProductDiscount] = [], locale: Foundation.Locale = .current)
+}
+extension RevenueCat.TestStoreProduct {
+  public func toStoreProduct() -> RevenueCat.StoreProduct
+}
+extension RevenueCat.PaywallData {
+  public var localizedConfiguration: RevenueCat.PaywallData.LocalizedConfiguration {
+    get
+  }
+}
 extension RevenueCat.PurchaseOwnershipType : Swift.Decodable {
   public init(from decoder: any Swift.Decoder) throws
 }
@@ -1605,6 +1967,10 @@ extension RevenueCat.Store : Swift.Encodable {
   @objc final public subscript(key: Swift.String) -> RevenueCat.EntitlementInfo? {
     @objc get
   }
+  @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
+  @objc final public var verification: RevenueCat.VerificationResult {
+    @objc get
+  }
   @objc override final public var description: Swift.String {
     @objc get
   }
@@ -1624,7 +1990,21 @@ extension RevenueCat.EntitlementInfos {
 }
 extension RevenueCat.EntitlementInfos : Swift.Sendable {
 }
-@_hasMissingDesignatedInitializers @objc(RCPackage) final public class Package : ObjectiveC.NSObject {
+@objc(RCStoreMessageType) public enum StoreMessageType : Swift.Int, Swift.CaseIterable, Swift.Sendable {
+  case billingIssue = 0
+  case priceIncreaseConsent
+  case generic
+  public init?(rawValue: Swift.Int)
+  public typealias AllCases = [RevenueCat.StoreMessageType]
+  public typealias RawValue = Swift.Int
+  public static var allCases: [RevenueCat.StoreMessageType] {
+    get
+  }
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@objc(RCPackage) final public class Package : ObjectiveC.NSObject {
   @objc final public let identifier: Swift.String
   @objc final public let packageType: RevenueCat.PackageType
   @objc final public let storeProduct: RevenueCat.StoreProduct
@@ -1635,6 +2015,7 @@ extension RevenueCat.EntitlementInfos : Swift.Sendable {
   @objc final public var localizedIntroductoryPriceString: Swift.String? {
     @objc get
   }
+  @objc public init(identifier: Swift.String, packageType: RevenueCat.PackageType, storeProduct: RevenueCat.StoreProduct, offeringIdentifier: Swift.String)
   @objc override final public func isEqual(_ object: Any?) -> Swift.Bool
   @objc override final public var hash: Swift.Int {
     @objc get
@@ -1666,10 +2047,69 @@ extension RevenueCat.Package : Swift.Sendable {
     @objc public func with(networkTimeout: Foundation.TimeInterval) -> RevenueCat.Configuration.Builder
     @objc public func with(storeKit1Timeout: Foundation.TimeInterval) -> RevenueCat.Configuration.Builder
     @objc public func with(platformInfo: RevenueCat.Purchases.PlatformInfo) -> RevenueCat.Configuration.Builder
+    @objc public func with(showStoreMessagesAutomatically: Swift.Bool) -> RevenueCat.Configuration.Builder
+    @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
+    @objc public func with(entitlementVerificationMode mode: RevenueCat.Configuration.EntitlementVerificationMode) -> RevenueCat.Configuration.Builder
     @objc public func build() -> RevenueCat.Configuration
     @objc deinit
   }
   @objc deinit
+}
+extension RevenueCat.Configuration {
+  @objc(RCEntitlementVerificationMode) public enum EntitlementVerificationMode : Swift.Int {
+    case disabled = 0
+    case informational = 1
+    @available(*, unavailable, message: "This will be supported in a future release")
+    case enforced = 2
+    public init?(rawValue: Swift.Int)
+    public typealias RawValue = Swift.Int
+    public var rawValue: Swift.Int {
+      get
+    }
+  }
+}
+public enum PaywallViewMode {
+  case fullScreen
+  case footer
+  case condensedFooter
+  public static let `default`: RevenueCat.PaywallViewMode
+  public static func == (a: RevenueCat.PaywallViewMode, b: RevenueCat.PaywallViewMode) -> Swift.Bool
+}
+extension RevenueCat.PaywallViewMode {
+  public var isFullScreen: Swift.Bool {
+    get
+  }
+}
+extension RevenueCat.PaywallViewMode : Swift.CaseIterable {
+  public typealias AllCases = [RevenueCat.PaywallViewMode]
+  public static var allCases: [RevenueCat.PaywallViewMode] {
+    get
+  }
+}
+extension RevenueCat.PaywallViewMode : Swift.Sendable {
+}
+extension RevenueCat.PaywallViewMode : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallViewMode : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct TestStoreProductDiscount {
+  public var identifier: Swift.String
+  public var price: Foundation.Decimal
+  public var localizedPriceString: Swift.String
+  public var paymentMode: RevenueCat.StoreProductDiscount.PaymentMode
+  public var subscriptionPeriod: RevenueCat.SubscriptionPeriod
+  public var numberOfPeriods: Swift.Int
+  public var type: RevenueCat.StoreProductDiscount.DiscountType
+  public init(identifier: Swift.String, price: Foundation.Decimal, localizedPriceString: Swift.String, paymentMode: RevenueCat.StoreProductDiscount.PaymentMode, subscriptionPeriod: RevenueCat.SubscriptionPeriod, numberOfPeriods: Swift.Int, type: RevenueCat.StoreProductDiscount.DiscountType)
+}
+extension RevenueCat.TestStoreProductDiscount {
+  public func toStoreProductDiscount() -> RevenueCat.StoreProductDiscount
 }
 @objc(RCIntroEligibilityStatus) public enum IntroEligibilityStatus : Swift.Int {
   case unknown = 0
@@ -1693,12 +2133,24 @@ extension RevenueCat.IntroEligibilityStatus : Swift.CustomStringConvertible {
     get
   }
 }
+extension RevenueCat.IntroEligibilityStatus {
+  public var isEligible: Swift.Bool {
+    get
+  }
+}
 @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(RCIntroEligibility) final public class IntroEligibility : ObjectiveC.NSObject {
   @objc final public let status: RevenueCat.IntroEligibilityStatus
+  @objc override final public func isEqual(_ object: Any?) -> Swift.Bool
+  @objc override final public var hash: Swift.Int {
+    @objc get
+  }
   @objc deinit
 }
 extension RevenueCat.IntroEligibility {
   @objc override final public var description: Swift.String {
+    @objc get
+  }
+  @objc override final public var debugDescription: Swift.String {
     @objc get
   }
 }
@@ -1816,6 +2268,65 @@ extension RevenueCat.StoreProductDiscount : Swift.Identifiable {
   }
   public typealias ID = RevenueCat.StoreProductDiscount.Data
 }
+public struct PaywallColor {
+  @frozen public enum ColorScheme : Swift.String {
+    case light
+    case dark
+    public init?(rawValue: Swift.String)
+    public typealias RawValue = Swift.String
+    public var rawValue: Swift.String {
+      get
+    }
+  }
+  public var stringRepresentation: Swift.String
+  @available(iOS 13.0, tvOS 13.0, macOS 10.15, watchOS 6.2, *)
+  public var underlyingColor: SwiftUI.Color {
+    get
+  }
+}
+extension RevenueCat.PaywallColor {
+  public init(stringRepresentation: Swift.String) throws
+  @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+  public init(light: RevenueCat.PaywallColor, dark: RevenueCat.PaywallColor)
+}
+@available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+extension SwiftUI.Color {
+  public var asPaywallColor: RevenueCat.PaywallColor {
+    get
+  }
+}
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+extension UIKit.UIColor {
+  public var asPaywallColor: RevenueCat.PaywallColor {
+    get
+  }
+}
+extension RevenueCat.PaywallColor.ColorScheme : Swift.Equatable {
+}
+extension RevenueCat.PaywallColor.ColorScheme : Swift.Sendable {
+}
+extension RevenueCat.PaywallColor.ColorScheme : Swift.Codable {
+}
+extension RevenueCat.PaywallColor : Swift.CustomDebugStringConvertible {
+  public var debugDescription: Swift.String {
+    get
+  }
+}
+extension RevenueCat.PaywallColor : Swift.Equatable {
+  public static func == (lhs: RevenueCat.PaywallColor, rhs: RevenueCat.PaywallColor) -> Swift.Bool
+}
+extension RevenueCat.PaywallColor : Swift.Hashable {
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension RevenueCat.PaywallColor : Swift.Sendable {
+}
+extension RevenueCat.PaywallColor : Swift.Codable {
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+}
 @objc(RCPurchasesDelegate) public protocol PurchasesDelegate : ObjectiveC.NSObjectProtocol {
   @available(swift, obsoleted: 1, renamed: "purchases(_:receivedUpdated:)")
   @available(iOS, obsoleted: 1)
@@ -1882,11 +2393,13 @@ public typealias PublicError = Foundation.NSError
   @objc @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   func customerInfo(fetchPolicy: RevenueCat.CacheFetchPolicy) async throws -> RevenueCat.CustomerInfo
   #endif
+  @objc var cachedCustomerInfo: RevenueCat.CustomerInfo? { get }
   @objc func getOfferings(completion: @escaping ((RevenueCat.Offerings?, RevenueCat.PublicError?) -> Swift.Void))
   #if compiler(>=5.3) && $AsyncAwait
   @objc @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   func offerings() async throws -> RevenueCat.Offerings
   #endif
+  @objc var cachedOfferings: RevenueCat.Offerings? { get }
   @objc(getProductsWithIdentifiers:completion:) func getProducts(_ productIdentifiers: [Swift.String], completion: @escaping ([RevenueCat.StoreProduct]) -> Swift.Void)
   #if compiler(>=5.3) && $AsyncAwait
   @objc @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
@@ -1906,6 +2419,7 @@ public typealias PublicError = Foundation.NSError
   @objc @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   func purchase(package: RevenueCat.Package) async throws -> RevenueCat.PurchaseResultData
   #endif
+  @objc func invalidateCustomerInfoCache()
   @objc func restorePurchases(completion: ((RevenueCat.CustomerInfo?, RevenueCat.PublicError?) -> Swift.Void)?)
   #if compiler(>=5.3) && $AsyncAwait
   @objc @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
@@ -1952,7 +2466,6 @@ public typealias PublicError = Foundation.NSError
   @objc @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
   func eligiblePromotionalOffers(forProduct product: RevenueCat.StoreProduct) async -> [RevenueCat.PromotionalOffer]
   #endif
-  @objc func invalidateCustomerInfoCache()
   #if compiler(>=5.3) && $AsyncAwait
   @available(iOS 15.0, *)
   @available(macOS, unavailable)
@@ -2055,6 +2568,13 @@ public protocol PurchasesSwiftType : AnyObject {
   @available(watchOS, unavailable)
   @available(tvOS, unavailable)
   func beginRefundRequestForActiveEntitlement(completion: @escaping (Swift.Result<RevenueCat.RefundRequestStatus, RevenueCat.PublicError>) -> Swift.Void)
+  #if compiler(>=5.3) && $AsyncAwait
+  @available(iOS 16.0, *)
+  @available(macOS, unavailable)
+  @available(watchOS, unavailable)
+  @available(tvOS, unavailable)
+  func showStoreMessages(for types: Swift.Set<RevenueCat.StoreMessageType>) async
+  #endif
 }
 public typealias SK1Product = StoreKit.SKProduct
 @available(iOS 15.0, tvOS 15.0, watchOS 8.0, macOS 12.0, *)
@@ -2118,6 +2638,10 @@ extension RevenueCat.StoreProduct {
     @objc get
   }
   @available(iOS 11.2, macOS 10.13.2, tvOS 11.2, watchOS 6.2, *)
+  @objc final public var pricePerWeek: Foundation.NSDecimalNumber? {
+    @objc get
+  }
+  @available(iOS 11.2, macOS 10.13.2, tvOS 11.2, watchOS 6.2, *)
   @objc final public var pricePerMonth: Foundation.NSDecimalNumber? {
     @objc get
   }
@@ -2163,6 +2687,9 @@ extension RevenueCat.StoreProduct {
     @objc get
   }
 }
+extension RevenueCat.VerificationResult : Swift.Equatable {}
+extension RevenueCat.VerificationResult : Swift.Hashable {}
+extension RevenueCat.VerificationResult : Swift.RawRepresentable {}
 extension RevenueCat.StoreProduct : Swift.Sendable {}
 extension RevenueCat.StoreProduct.ProductCategory : Swift.Equatable {}
 extension RevenueCat.StoreProduct.ProductCategory : Swift.Hashable {}
@@ -2201,6 +2728,14 @@ extension RevenueCat.SubscriptionPeriod.Unit : Swift.RawRepresentable {}
 extension RevenueCat.PurchaseOwnershipType : Swift.Equatable {}
 extension RevenueCat.PurchaseOwnershipType : Swift.Hashable {}
 extension RevenueCat.PurchaseOwnershipType : Swift.RawRepresentable {}
+extension RevenueCat.TestStoreProduct : Swift.Sendable {}
+extension RevenueCat.StoreMessageType : Swift.Equatable {}
+extension RevenueCat.StoreMessageType : Swift.Hashable {}
+extension RevenueCat.StoreMessageType : Swift.RawRepresentable {}
+extension RevenueCat.Configuration.EntitlementVerificationMode : Swift.Equatable {}
+extension RevenueCat.Configuration.EntitlementVerificationMode : Swift.Hashable {}
+extension RevenueCat.Configuration.EntitlementVerificationMode : Swift.RawRepresentable {}
+extension RevenueCat.TestStoreProductDiscount : Swift.Sendable {}
 extension RevenueCat.IntroEligibilityStatus : Swift.Equatable {}
 extension RevenueCat.IntroEligibilityStatus : Swift.Hashable {}
 extension RevenueCat.IntroEligibilityStatus : Swift.RawRepresentable {}
@@ -2210,6 +2745,8 @@ extension RevenueCat.CacheFetchPolicy : Swift.RawRepresentable {}
 extension RevenueCat.StoreProductDiscount.DiscountType : Swift.Equatable {}
 extension RevenueCat.StoreProductDiscount.DiscountType : Swift.Hashable {}
 extension RevenueCat.StoreProductDiscount.DiscountType : Swift.RawRepresentable {}
+extension RevenueCat.PaywallColor.ColorScheme : Swift.Hashable {}
+extension RevenueCat.PaywallColor.ColorScheme : Swift.RawRepresentable {}
 extension RevenueCat.AttributionNetwork : Swift.Equatable {}
 extension RevenueCat.AttributionNetwork : Swift.Hashable {}
 extension RevenueCat.AttributionNetwork : Swift.RawRepresentable {}
