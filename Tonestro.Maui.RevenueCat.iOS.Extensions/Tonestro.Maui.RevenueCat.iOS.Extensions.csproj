@@ -14,7 +14,6 @@
         <Company>fun.music IT GmbH</Company>
         <PackageOutputPath>nugetoutput</PackageOutputPath>
         <PackageLicensePath>..\LICENSE.txt</PackageLicensePath>
-        <PackageReadmeFile>..\README.md</PackageReadmeFile>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\Tonestro.Maui.RevenueCat.iOS\Tonestro.Maui.RevenueCat.iOS.csproj" />

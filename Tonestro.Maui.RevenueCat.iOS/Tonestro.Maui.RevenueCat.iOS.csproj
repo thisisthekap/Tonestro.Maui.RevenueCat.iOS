@@ -18,7 +18,6 @@
         <Company>fun.music IT GmbH</Company>
         <PackageOutputPath>nugetoutput</PackageOutputPath>
         <PackageLicensePath>..\LICENSE.txt</PackageLicensePath>
-        <PackageReadmeFile>..\README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,4 +33,25 @@
             <IsCxx>False</IsCxx>
         </NativeReference>
     </ItemGroup>
+
+    <Target Name="_StripBitcodeFromFrameworksOnMac" AfterTargets="Build" Condition="'$(OS)'=='Unix'">
+        <Message Text="Stripping Bitcode..." Importance="high" />
+
+        <!-- Diagnostic messages to ensure paths and commands are correct -->
+        <Message Text="Framework Path: nativelib/RevenueCat.framework/RevenueCat" Importance="high" />
+        <Exec Command="ls -l nativelib/RevenueCat.framework" />
+
+        <Message Text="Finding the bitcode_strip command..." Importance="high" />
+        <Exec Command="xcrun -find bitcode_strip" ConsoleToMSBuild="true">
+            <Output TaskParameter="ConsoleOutput" PropertyName="_BitcodeStripCommand" />
+        </Exec>
+
+        <Message Text="Bitcode_strip command found: $(_BitcodeStripCommand)" Importance="high" />
+        <Message Text="Stripping the bitcode from frameworks..." Importance="high" />
+
+        <Exec Command="$(_BitcodeStripCommand) nativelib/RevenueCat.framework/RevenueCat -r -o nativelib/RevenueCat.framework/RevenueCat" />
+        <Message Text="Bitcode stripping complete." Importance="high" />
+    </Target>
+
+
 </Project>
