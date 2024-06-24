@@ -7,7 +7,7 @@
     <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Tonestro.Maui.RevenueCat.iOS" Version="4.39.0.6" />
-    <PackageReference Include="Tonestro.Maui.RevenueCat.iOS.Extensions" Version="4.39.0.5" />
+    <PackageReference Include="Tonestro.Maui.RevenueCat.iOS" Version="4.39.0.7" />
+    <PackageReference Include="Tonestro.Maui.RevenueCat.iOS.Extensions" Version="4.39.0.7" />
   </ItemGroup>
 </Project>
