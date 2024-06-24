@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>Maui.RevenueCat.iOS.UsageChecker</string>
+    <string>Tonestro.Maui.RevenueCat.iOS.UsageChecker</string>
     <key>CFBundleIdentifier</key>
-    <string>com.companyname.Maui.RevenueCat.iOS.UsageChecker</string>
+    <string>com.companyname.Tonestro.Maui.RevenueCat.iOS.UsageChecker</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>

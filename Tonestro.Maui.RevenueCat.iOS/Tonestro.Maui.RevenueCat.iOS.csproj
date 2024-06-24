@@ -1,31 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net7.0-ios</TargetFramework>
-        <Nullable>disable</Nullable>
-        <ImplicitUsings>false</ImplicitUsings>
+        <TargetFramework>net8.0-ios</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>true</ImplicitUsings>
         <IsBindingProject>true</IsBindingProject>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <NoBindingEmbedding>false</NoBindingEmbedding>
-        <RootNamespace>Tonestro.Maui.RevenueCat.iOS</RootNamespace>
     </PropertyGroup>
-    
     <PropertyGroup>
         <IsPackable>true</IsPackable>
         <PackageId>Tonestro.Maui.RevenueCat.iOS</PackageId>
-        <Version>4.22.0.0</Version>
+        <Version>4.39.0.6</Version>
         <Description>Contains bindings for https://docs.revenuecat.com/docs/ios</Description>
-        <Authors>Christian Kapplmüller</Authors>
+        <Authors>Christian Kapplmüller, Albilaga Linggra Pradana</Authors>
         <Company>fun.music IT GmbH</Company>
         <PackageOutputPath>nugetoutput</PackageOutputPath>
-        <PackageLicensePath>..\..\..\LICENSE.txt</PackageLicensePath>
+        <PackageLicensePath>..\LICENSE</PackageLicensePath>
     </PropertyGroup>
 
     <ItemGroup>
-        <ObjcBindingApiDefinition Include="ApiDefinition.cs" />
-        <ObjcBindingCoreSource Include="StructsAndEnums.cs" />
+        <ObjcBindingApiDefinition Include="ApiDefinition.cs"/>
+        <ObjcBindingCoreSource Include="StructsAndEnums.cs"/>
     </ItemGroup>
     <ItemGroup>
-        <NativeReference Include="nativelib\RevenueCat.framework">
+        <NativeReference Include="nativelib\RevenueCat.xcframework">
             <Kind>Framework</Kind>
             <SmartLink>False</SmartLink>
             <ForceLoad>True</ForceLoad>

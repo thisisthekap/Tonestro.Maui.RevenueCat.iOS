@@ -1,0 +1,2 @@
+Tonestro.Maui.RevenueCat.iOS
+Tonestro.Maui.RevenueCat.iOS.Extensions

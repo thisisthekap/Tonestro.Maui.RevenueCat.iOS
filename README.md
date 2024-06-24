@@ -1,6 +1,6 @@
 # Maui.RevenueCat.iOS
 
-.NET 7 iOS (MAUI) Bindings for RevenueCat ([Website](https://www.revenuecat.com/), [Setup Instructions](https://docs.revenuecat.com/docs/ios)).
+.NET 8 iOS (MAUI) Bindings for RevenueCat ([Website](https://www.revenuecat.com/), [Setup Instructions](https://docs.revenuecat.com/docs/ios)).
 
 ## About this Repository
 

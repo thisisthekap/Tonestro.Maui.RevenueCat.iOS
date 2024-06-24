@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\Tonestro.Maui.RevenueCat.iOS\Tonestro.Maui.RevenueCat.iOS.csproj" />
-    <ProjectReference Include="..\Tonestro.Maui.RevenueCat.iOS.Extensions\Tonestro.Maui.RevenueCat.iOS.Extensions.csproj" />
-  </ItemGroup>
   <PropertyGroup>
-    <TargetFramework>net7.0-ios</TargetFramework>
+    <TargetFramework>net8.0-ios</TargetFramework>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>true</ImplicitUsings>
     <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
-    <RootNamespace>Tonestro.Maui.RevenueCat.iOS.UsageChecker</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Tonestro.Maui.RevenueCat.iOS" Version="4.39.0.6" />
+    <PackageReference Include="Tonestro.Maui.RevenueCat.iOS.Extensions" Version="4.39.0.5" />
+  </ItemGroup>
 </Project>

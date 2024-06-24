@@ -1,4 +1,5 @@
 using RevenueCat;
+using Tonestro.Maui.RevenueCat.iOS.Extensions;
 
 namespace Tonestro.Maui.RevenueCat.iOS.UsageChecker;
 
@@ -9,6 +10,12 @@ public class AppDelegate : UIApplicationDelegate
 
     public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
     {
+        RCPurchases.DebugLogsEnabled = true;
+        RCPurchases.ConfigureWithAPIKey("theapikey");
+        Console.WriteLine($"Bound RevenueCat iOS SDK Version: {RCPurchases.FrameworkVersion}");
+        var userCancelledException = new PurchasesErrorException(new NSError(), true);
+        Console.WriteLine($"Extensions should be working properly as well: {userCancelledException}");
+
         // create a new window instance based on the screen size
         Window = new UIWindow(UIScreen.MainScreen.Bounds);
 
@@ -25,10 +32,6 @@ public class AppDelegate : UIApplicationDelegate
 
         // make the window visible
         Window.MakeKeyAndVisible();
-
-        RCPurchases.DebugLogsEnabled = true;
-        RCPurchases.ConfigureWithAPIKey("theapikey");
-        Console.WriteLine($"Bound RevenueCat iOS SDK Version: {RCPurchases.FrameworkVersion}");
 
         return true;
     }

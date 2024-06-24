@@ -1,0 +1,55 @@
+pr:
+  - main
+
+pool:
+  vmImage: 'macOS-13'
+
+steps:
+
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    useGlobalJson: true
+
+- bash: |
+    echo "##vso[build.updatebuildnumber]pullrequests-xamarin-revenuecat-ios-$(Build.SourceBranchName)-$(Build.BuildId)"
+  displayName: Set Build Number
+
+- bash: |
+    sudo dotnet workload restore
+  displayName: Restore workloads
+
+- bash: |
+    cd Tonestro.Maui.RevenueCat.iOS
+    dotnet build -c Release
+    dotnet pack -c Release
+  displayName: "Tonestro.Maui.RevenueCat.iOS: Build Release Nuget"
+
+- bash: |
+    cd Tonestro.Maui.RevenueCat.iOS.Extensions
+    dotnet build -c Release
+    dotnet pack -c Release
+  displayName: "Tonestro.Maui.RevenueCat.iOS.Extensions: Build Release Nuget"
+
+- bash: |
+    ./copy-nugets.sh
+  displayName: "Copy nugets to nugetoutput folder"
+
+- bash: |
+    cd local-nugets
+    cp ../nugetoutput/Tonestro.Maui.RevenueCat.iOS.*.nupkg .
+    cd ..
+  displayName: copy nugets to local-nugets
+
+- bash: |
+    cd Xamarin.RevenueCat.iOS.UsageChecker
+    dotnet build
+  displayName: Build UsageChecker
+
+- task: PublishBuildArtifacts@1
+  displayName: publish nugetoutput
+  inputs:
+    PathtoPublish: 'nugetoutput'
+    ArtifactName: 'nugetoutput'
+    publishLocation: 'Container'
+    StoreAsTar: true
