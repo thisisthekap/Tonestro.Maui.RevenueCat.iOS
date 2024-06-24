@@ -6,6 +6,10 @@ pool:
 
 steps:
 
+- bash: |
+    sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+  displayName: pin xcode version to 15.2
+
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
